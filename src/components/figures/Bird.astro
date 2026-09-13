@@ -1,0 +1,24 @@
+---
+/**
+ * A bird crossing the frame. The glide is on the outer group and the wingbeat on
+ * the inner one, so each runs on its own clock — see scene.css.
+ */
+interface Props {
+  x: number;
+  y: number;
+  scale?: number;
+  /** Selects the glide duration and phase. */
+  index: 1 | 2;
+}
+
+const { x, y, scale = 1, index } = Astro.props;
+const place = scale === 1 ? `translate(${x} ${y})` : `translate(${x} ${y}) scale(${scale})`;
+---
+
+<g transform={place}>
+  <g class={`mg-bird mg-bird--${index}`}>
+    <g class="mg-bird__wings">
+      <path class="mg-bird__mark" d="M -3.4 0 Q -1.7 -2.1, 0 -0.4 Q 1.7 -2.1, 3.4 0" />
+    </g>
+  </g>
+</g>

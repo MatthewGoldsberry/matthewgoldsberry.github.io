@@ -1,0 +1,186 @@
+---
+/**
+ * Crew plate — the portrait, and the two facts a reader checks next.
+ *
+ * The photo is displayed as a 200px square, so the plate is built at roughly that
+ * size rather than scaled up to fill a column; every measurement here comes off
+ * it. The source file is 512px, so there is now headroom to enlarge it. The
+ * plate also carries the location and availability that used to sit in an
+ * eyebrow above the name, which is why there is no eyebrow any more — it was
+ * saying the same two things a second time.
+ *
+ * The responsive behaviour stays in a scoped stylesheet rather than becoming
+ * utilities. It turns on two independent axes — narrow OR short, because a
+ * full-size portrait with two rows under it is over 350px, which is most of a
+ * phone's fold and most of the height budget on a laptop — and it restructures
+ * the box rather than retuning it. As utilities that is a `max-[53em]:` and a
+ * `max-h-[58em]:` prefix on nine declarations with the reasoning deleted.
+ */
+import { hero } from "../../data/site";
+---
+
+<aside class="mg-plate">
+  <img
+    class="mg-plate__photo"
+    src={hero.photo}
+    alt={hero.photoAlt}
+    width="512"
+    height="512"
+    decoding="async"
+    fetchpriority="high"
+  />
+
+  <dl class="mg-plate__rows">
+    {
+      hero.plate.map((row) => (
+        <div class="mg-plate__row">
+          <dt class="font-mono text-label tracking-[0.14em] text-ink-faint uppercase">
+            {row.label}
+          </dt>
+          <dd class="mt-1 ml-0 text-[0.8rem] leading-snug text-ink">
+            {"led" in row && row.led && <span class="mg-plate__led" />}
+            {row.value}
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+</aside>
+
+<style>
+  .mg-plate {
+    position: relative;
+    /* One number drives the portrait and the rows under it. profile.jpg is now
+       512x512, so 200px is a design choice rather than a resolution ceiling —
+       the plate is deliberately kept near the photo's on-screen size so it does
+       not eat the fold (see the note above). The svh term shrinks it on a short window,
+       where a full-size plate is over half the hero's height budget on its own;
+       it is 26svh rather than 20svh so the plate reaches its full size on more
+       windows instead of being held under it. */
+    --portrait: min(200px, 26svh);
+    /* Sized by the photo, not by a rem figure: fit-content keeps the plate
+       exactly as wide as the image plus its padding, whatever the root font is
+       doing. */
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.65rem;
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--mg-shadow);
+    justify-self: end;
+  }
+
+  /* Two crop marks, not four. A facing pair reads as a frame on its own, and a
+     full set would be a second box drawn around a card that has a border. */
+  .mg-plate::before,
+  .mg-plate::after {
+    content: "";
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    border: 1px solid var(--color-accent-line);
+  }
+
+  .mg-plate::before {
+    top: -6px;
+    left: -6px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .mg-plate::after {
+    right: -6px;
+    bottom: -6px;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  /* object-fit: cover on a fixed square — the source is already a square crop, so
+     this only guards against a future non-square file. */
+  .mg-plate__photo {
+    display: block;
+    width: var(--portrait);
+    height: var(--portrait);
+    max-width: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+
+  /* Held to the photo's width. The plate is fit-content, so without this the
+     longest status line sets the plate's width instead of the picture — the
+     photo then sits inset from the rules under it, which reads as a mistake. */
+  .mg-plate__rows {
+    box-sizing: border-box;
+    width: var(--portrait);
+    max-width: 100%;
+    margin: 0;
+    padding: 0.7rem 0.35rem 0.2rem;
+  }
+
+  .mg-plate__row + .mg-plate__row {
+    margin-top: 0.55rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--color-edge);
+  }
+
+  /* The same dot the section eyebrows use, so "available" reads as one more
+     readout on an instrument rather than as a new piece of vocabulary. Static:
+     the pass overhead is already the one moving thing on this screen. */
+  .mg-plate__led {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 0.55em;
+    vertical-align: 0.08em;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+  }
+
+  /* The plate turns on its side whenever there is no room to stack it — because
+     the screen is narrow, or because it is short. Both are the same problem. The
+     height cutoff is 58em rather than something rounder because 864 and 900 are
+     the two commonest desktop viewport heights and both sit just under it. */
+  @media screen and (max-width: 53em), screen and (max-height: 58em) {
+    .mg-plate {
+      --portrait: 10rem;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      /* A definite width, not `auto` plus a max-width. The plate's grid track is
+         `auto`, which sizes to the item's max-content contribution: left alone
+         the card ran to ~360px, took that off the name's column and wrapped the
+         heading — and a max-width did not shrink the track, only the item in it.
+
+         Widening this no longer risks that: the name is sized against its own
+         column in container units (see Hero.astro), so it re-fits itself to
+         whatever width the plate leaves rather than breaking onto a second line.
+         160px of portrait here is well inside the 512px source resolution, so
+         the bigger plate costs nothing in sharpness.
+
+         22rem rather than 20rem for the status line: at 20rem the rows column
+         came to 124px and "Open to summer 2027" needs 143px with its lamp, so
+         the one row that is supposed to read as a single readout wrapped. The
+         plate is only worth enlarging if its contents get the benefit. */
+      width: min(100%, 22rem);
+    }
+
+    .mg-plate__photo {
+      flex: 0 0 auto;
+    }
+
+    .mg-plate__rows {
+      flex: 1 1 auto;
+      width: auto;
+      min-width: 0;
+      padding: 0 0.2rem;
+    }
+  }
+
+  @media screen and (max-width: 44.9em) {
+    .mg-plate {
+      --portrait: 7.5rem;
+    }
+  }
+</style>

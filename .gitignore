@@ -1,3 +1,13 @@
-site
-.venv
-.cache
+# Build output
+dist/
+.astro/
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.production
+
+# OS
+.DS_Store

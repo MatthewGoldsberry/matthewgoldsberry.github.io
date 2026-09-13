@@ -1,0 +1,26 @@
+---
+/**
+ * Landing page.
+ *
+ * The whole page is the scene: header, hero, footer, one screen, no scroll.
+ * The proof strip, "currently", research feature, work grid and skills that
+ * used to run below the fold are gone from this page by request — the hero is
+ * the entire pitch now, and the nav's Projects/Experience/Research/Resume
+ * pages are where that detail actually lives.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/hero/Hero.astro";
+import SkillsBar from "../components/chrome/SkillsBar.astro";
+import { site } from "../data/site";
+---
+
+<BaseLayout description={site.description} bare fitViewport>
+  {/* `h-full flex-col`: BaseLayout's `fitViewport` gives `main` its height by
+      flexing it against the header and footer; this arranges what's inside
+      it the same way, so the scene grows and the ticker stays a fixed strip
+      pinned under it rather than the two splitting the space evenly. */}
+  <div class="flex h-full flex-col">
+    <Hero />
+    <SkillsBar />
+  </div>
+</BaseLayout>

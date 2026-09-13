@@ -1,0 +1,286 @@
+---
+/**
+ * The overhang — one plane leaning 15 degrees off vertical, anchored at the
+ * bottom-right of the hero, so the rock widens as it rises. That is what an
+ * overhanging wall looks like from underneath it.
+ *
+ * Everything about the wall lives in this one local frame: x = 0 is the
+ * overhanging lip, +x goes back into the rock, and -y goes UP the wall. The
+ * caller rotates the frame, which is what makes the holds sit on the incline
+ * rather than on the screen.
+ *
+ * HEIGHT. The wall runs the full height of whatever frame it is placed in, and
+ * `top` is how far up it goes in local units. The caller works that out from
+ * its own viewBox: at this rotation a local y contributes `y * cos(15°)` of
+ * screen height, so reaching a point H units above the anchor needs
+ * `top = -H / cos(15°)`, which is what `areteTopFor` below returns.
+ *
+ * The profile is generated rather than hand-listed so it can run to any height
+ * without a hand-authored point per 50 units. The original hand-drawn points are
+ * kept verbatim for the stretch that was always visible — the lower ~420 units,
+ * which is the part that sits behind the climber and reads at full size — and
+ * the generator only continues the pattern above them. The rock you could
+ * already see is therefore unchanged, and only genuinely new wall is synthesised.
+ *
+ * The arete profile and the lip that traces it are shared between both
+ * compositions. What varies is how deep the rock runs back and which cracks and
+ * ledges are drawn on the face.
+ *
+ * SANDSTONE. The face is not a flat fill. Back to front it is: a vertical
+ * lit→core gradient (mg-cliff-lg); the bedding planes, the strata that make it
+ * read as sandstone specifically; the shaded core wedge; erosion pockets; an
+ * feTurbulence grain wash; desert-varnish streaks; and the two-stroke arete.
+ * All the paint lives in scene.css against the --mg-cliff-* tokens.
+ *
+ * CLIPPING. Everything that is surface — beds, pockets, streaks, grain, cracks,
+ * ledges — is authored to run a little PAST the arete and is then clipped back
+ * to the face by `mg-cliff-clip`. That is what makes the marks read as texture
+ * lying on the rock and broken by its edge, instead of drawn lines that stop
+ * short of it or float out into the sky. Only the arete strokes and the climber
+ * (deliberately out on the lip) sit outside the clip.
+ */
+
+interface Props {
+  /** How far back the DETAIL runs — bedding, the shaded-core edge, pockets — in
+   *  local units. The mass itself runs further; see `back`. */
+  depth: number;
+  /** How far back the rock MASS runs. The wall leans 15° as it rises, so its top
+   *  corner is carried left by |top|·sin15°; `back` has to be deep enough that
+   *  the corner still clears the right edge of the viewBox, or a tall/narrow
+   *  window shows sky in the top-right. The caller derives it from its own
+   *  anchor and viewBox — see `cliffBack` in CliffFace.astro. */
+  back: number;
+  /** Local y the wall runs up to. Use `areteTopFor()` to derive it. */
+  top: number;
+  cracks: readonly string[];
+  ledges: readonly string[];
+  /** Which composition this instance is in. Only used to keep the gradient,
+   *  grain-filter and clip-path ids unique between the two SVGs. */
+  variant: "wide" | "narrow";
+}
+
+const { depth, back, top, cracks, ledges, variant } = Astro.props;
+const sfx = variant === "narrow" ? "n" : "w";
+
+/* The authored profile, bottom to top. Kept exactly as drawn: this is the rock
+   that was always on screen. */
+const AUTHORED: readonly (readonly [number, number])[] = [
+  [4, 100], [-2, 52], [5, 4], [-4, -48], [3, -96], [-6, -150],
+  [2, -204], [-3, -258], [6, -310], [-2, -366], [4, -420],
+];
+
+/* Continuing the pattern above the authored stretch. The x offsets are a fixed
+   sequence rather than Math.random: the build has to be reproducible, and a
+   profile that reshuffled on every deploy would make any visual diff useless. */
+const JITTER = [-5, 3, -3, 6, -4, 2, -6, 5, -2, 4, -3, 6, -5, 3, -2, 5, -4, 2] as const;
+const STEP = 53;
+
+const profile: [number, number][] = AUTHORED.map(([x, y]) => [x, y]);
+
+let y = -420;
+let i = 0;
+while (y - STEP > top) {
+  y -= STEP;
+  profile.push([JITTER[i % JITTER.length]!, y]);
+  i++;
+}
+// Close on the requested top so the wall ends exactly where it was asked to.
+profile.push([JITTER[i % JITTER.length]!, top]);
+
+const arete = "M " + profile.map(([x, py]) => `${x} ${py}`).join(" L ");
+
+/* The shaded core, back from the lip. Same treatment: the authored wave for the
+   stretch that was visible, continued upward at the same amplitude. */
+const SHADE_AUTHORED: readonly (readonly [number, number])[] = [
+  [80, -420], [70, -300], [86, -200], [72, -100], [86, 0], [74, 100],
+];
+
+const shade: [number, number][] = [];
+let sy = -420;
+let si = 0;
+while (sy > top) {
+  sy -= 110;
+  // Alternating either side of the core's mean offset, as the authored wave does.
+  shade.unshift([si % 2 === 0 ? 84 : 71, Math.max(sy, top)]);
+  si++;
+}
+shade.push(...SHADE_AUTHORED.map(([x, sYy]) => [x, sYy] as [number, number]));
+
+const shadeEdge = "M " + shade.map(([x, sYy]) => `${x} ${sYy}`).join(" L ");
+
+/* The mass runs to `back`, not `depth`: `depth` is only how far the drawn detail
+   reaches. Everything from there to `back` is the same lit→core gradient and the
+   grain, so it fills the frame without a seam or a flat panel. */
+const faceD = `${arete} L ${back} ${top} L ${back} 100 Z`;
+
+const r = (n: number) => Math.round(n * 100) / 100;
+
+/* Bedding planes. Generated so they fill whatever height the wall runs to, the
+   same as the arete. Each is a rough polyline — a fractured bedding plane, not a
+   drawn arc — that dips back into the rock and waves either side of level. Every
+   third is a marker bed that runs the full mass; the rest pinch out partway, the
+   way real strata do. Weight and opacity vary line to line so the banding reads
+   as rock rather than as ruling. All start past the lip and are clipped back. */
+const BED_STEP = 50;
+const BED_JITTER = [0, 6, -5, 3, -8, 4, -3, 7, -6, 2, -4, 5, -7, 3] as const;
+const BED_WOB = [1.6, -2.2, 0.6, -1.1, 2.6, -1.7, 1, -2.6, 0.5, -0.6, 2.1, -1.3] as const;
+/* Marker beds carry on into the deep mass so the banding does not hard-stop at
+   `depth`, but past `depth` they nearly flatten — a bed running away from the
+   viewer foreshortens toward level. */
+const BED_FAR_DIP = 0.3;
+const beds: { d: string; marker: boolean; o: number }[] = [];
+{
+  const x0 = -16;
+  const dip = 0.078;
+  const N = 7;
+  const bedY = (x: number, y0: number) => {
+    const run = x - x0;
+    const near = Math.min(run, depth);
+    return y0 + near * dip + Math.max(0, run - depth) * dip * BED_FAR_DIP;
+  };
+  let by = 76;
+  let bi = 0;
+  while (by > top) {
+    const y0 = by + BED_JITTER[bi % BED_JITTER.length]!;
+    const marker = bi % 3 === 0;
+    const span = marker
+      ? Math.min(back, depth * 2)
+      : depth * (0.52 + 0.42 * (((bi * 5) % 7) / 6));
+    let d = `M ${r(x0)} ${r(y0)}`;
+    for (let k = 1; k <= N; k++) {
+      const t = k / N;
+      const x = x0 + (span - x0) * t;
+      const base = bedY(x, y0);
+      const wob = BED_WOB[(bi + k) % BED_WOB.length]! * (marker ? 1.7 : 1.1);
+      d += ` L ${r(x)} ${r(base + wob)}`;
+    }
+    beds.push({
+      d,
+      marker,
+      o: marker ? 0.38 + 0.1 * ((bi % 3) / 2) : 0.16 + 0.13 * (((bi * 3) % 5) / 4),
+    });
+    by -= BED_STEP;
+    bi++;
+  }
+}
+
+/* Erosion pockets — the shallow scoops and honeycomb weathering that pit a real
+   sandstone face. Fixed positions (reproducible build); some sit under the lip
+   and are cut in half by the clip, which is what a pocket at the edge of the
+   rock actually looks like. */
+const POCKETS: readonly (readonly [number, number, number, number, number])[] = [
+  [26, -104, 9, 5.5, 14], [58, -146, 6, 4, -10], [16, -232, 11, 6.5, 22],
+  [72, -298, 7, 5, 2], [40, -356, 9.5, 6, -16], [96, -208, 6, 4, 9],
+  [14, -462, 8, 5, 18], [54, -520, 10, 6, -12], [84, -560, 6, 4.5, 6],
+  [32, -624, 9, 6, 15], [104, -430, 7, 4.5, -8], [44, -212, 5.5, 3.5, 20],
+];
+
+/* Desert varnish — dark water-streaks hung off the lip and ledges, near the
+   overhanging edge where the face is steepest. Widths vary; any streak that
+   starts above the visible wall simply never shows. */
+const STREAKS: { x: number; y: number; len: number; drift: number; w: number }[] = [
+  { x: 4, y: -140, len: 300, drift: 10, w: 6 },
+  { x: 17, y: -84, len: 360, drift: 13, w: 4.5 },
+  { x: 27, y: -210, len: 190, drift: 7, w: 7 },
+  { x: 9, y: -350, len: 280, drift: 11, w: 4 },
+  { x: 34, y: -300, len: 150, drift: 5, w: 5.5 },
+  { x: 20, y: -470, len: 240, drift: 12, w: 5 },
+];
+const streaks = STREAKS.map((s) => ({
+  w: s.w,
+  d:
+    `M ${s.x} ${s.y} ` +
+    `C ${r(s.x + s.drift * 0.25)} ${r(s.y + s.len * 0.4)}, ` +
+    `${r(s.x + s.drift * 0.7)} ${r(s.y + s.len * 0.78)}, ` +
+    `${r(s.x + s.drift)} ${r(s.y + s.len)}`,
+}));
+---
+
+<defs>
+  {/* Vertical face gradient: the arete and upper wall take open skylight, the
+      overhung foot falls into its own shade. objectBoundingBox, so it maps to
+      the face path's box at whatever height the wall runs to. */}
+  <linearGradient id={`mg-cliff-lg-${sfx}`} x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="var(--mg-cliff-lit)" />
+    <stop offset="0.5" stop-color="var(--mg-cliff)" />
+    <stop offset="1" stop-color="var(--mg-cliff-core)" />
+  </linearGradient>
+
+  {/* Clips every surface mark back to the face outline. */}
+  <clipPath id={`mg-cliff-clip-${sfx}`}>
+    <path d={faceD} />
+  </clipPath>
+
+  {/* Surface grain: a coarse mottle times a fine tooth, greyscaled and clipped
+      to the face. Blended `overlay` in scene.css. */}
+  <filter id={`mg-cliff-grain-${sfx}`} x="-2%" y="-2%" width="104%" height="104%">
+    <feTurbulence
+      type="fractalNoise"
+      baseFrequency="0.015 0.038"
+      numOctaves="2"
+      seed="11"
+      stitchTiles="stitch"
+      result="coarse"
+    />
+    <feTurbulence
+      type="fractalNoise"
+      baseFrequency="0.2 0.17"
+      numOctaves="1"
+      seed="4"
+      stitchTiles="stitch"
+      result="fine"
+    />
+    <feBlend in="coarse" in2="fine" mode="multiply" result="noise" />
+    <feColorMatrix
+      in="noise"
+      type="matrix"
+      values="0.6 0.6 0.6 0 -0.06 0.6 0.6 0.6 0 -0.06 0.6 0.6 0.6 0 -0.06 0 0 0 0 0.9"
+      result="grey"
+    />
+    <feComposite in="grey" in2="SourceGraphic" operator="in" />
+  </filter>
+</defs>
+
+<path class="mg-cliff-face" d={faceD} />
+
+<g clip-path={`url(#mg-cliff-clip-${sfx})`}>
+  {
+    beds.map((b) => (
+      <path
+        class:list={["mg-cliff-bed", b.marker && "mg-cliff-bed--marker"]}
+        d={b.d}
+        style={`opacity:${r(b.o)}`}
+      />
+    ))
+  }
+  <path class="mg-cliff-shade" d={`${shadeEdge} L ${back} 100 L ${back} ${top} Z`} />
+  {
+    POCKETS.map(([cx, cy, rx, ry, rot]) => (
+      <ellipse
+        class="mg-cliff-pocket"
+        cx={cx}
+        cy={cy}
+        rx={rx}
+        ry={ry}
+        transform={`rotate(${rot} ${cx} ${cy})`}
+      />
+    ))
+  }
+  {streaks.map((s) => <path class="mg-cliff-streak" d={s.d} style={`stroke-width:${s.w}`} />)}
+</g>
+
+{/* Grain sits OUTSIDE the clipped group: it carries its own face clip in the
+    filter (feComposite), and `mix-blend-mode: overlay` has to blend against the
+    whole scene behind it — inside a clip-path'd group the browser isolates that
+    blend and the wall greys out. */}
+<path class="mg-cliff-grain" d={faceD} filter={`url(#mg-cliff-grain-${sfx})`} />
+
+<g clip-path={`url(#mg-cliff-clip-${sfx})`}>
+  {cracks.map((d: string) => <path class="mg-crack" d={d} />)}
+  {ledges.map((d: string) => <path class="mg-ledge" d={d} />)}
+</g>
+
+<path class="mg-lip-rim" d={arete} />
+<path class="mg-lip" d={arete} />
+
+<slot />

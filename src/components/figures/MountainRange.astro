@@ -1,0 +1,108 @@
+---
+/**
+ * The far range — a jagged skyline with snow on the high peaks.
+ *
+ * The ridge is a hand-authored polyline rather than a curve: mountains at this
+ * distance read as an angular silhouette, and the smooth béziers this replaced
+ * read as rolling hills no matter how much amplitude they were given. Sharpness
+ * is the whole signal.
+ *
+ * SNOW IS DERIVED, NOT DRAWN. Each cap is computed from the ridge itself: the
+ * component walks the polyline, finds every run of vertices above `snowline`,
+ * and builds a polygon that follows the actual ridge across the top and closes
+ * along a ragged lower edge. So a cap can never sit beside its peak or float off
+ * it — move a peak and its snow moves with it. Hand-drawn caps would have to be
+ * re-registered against the ridge on every edit.
+ *
+ * The lower edge only ever reaches DOWNWARD from the snowline. That is not a
+ * stylistic choice: between the two snowline crossings the ridge is above the
+ * line, so anything below the line there is still inside the mountain, while a
+ * point above it could poke out into open sky near the crossings. Fingers of
+ * snow reaching down gullies are also what real snowlines look like — a ruler
+ * straight cut reads as a graphic, not as a mountain.
+ */
+import type { Ridge } from "./types";
+
+interface Props {
+  /** Ridge polyline, left to right. First and last points should sit on the frame edges. */
+  ridge: Ridge;
+  /** Bottom of the filled mass — the composition's floor. */
+  baseline: number;
+  /** Peaks above this y carry snow. Lower number = higher up = less snow. */
+  snowline: number;
+  class?: string;
+}
+
+const { ridge, baseline, snowline, class: className = "" } = Astro.props;
+
+const first = ridge[0]!;
+const last = ridge[ridge.length - 1]!;
+
+const rock =
+  `M ${first[0]} ${baseline} L ${ridge.map(([x, y]) => `${x} ${y}`).join(" L ")} ` +
+  `L ${last[0]} ${baseline} Z`;
+
+/** x at which the segment a->b crosses a horizontal line. */
+const crossX = (a: readonly [number, number], b: readonly [number, number], level: number) =>
+  Math.round((a[0] + ((b[0] - a[0]) * (level - a[1])) / (b[1] - a[1])) * 10) / 10;
+
+/* How far each step of the lower edge dips below the snowline, as a FRACTION of
+   how tall that cap is above the line. Cycled rather than randomised so the
+   build is reproducible, and uneven on purpose — a regularly toothed edge reads
+   as zigzag decoration rather than as a snowline.
+
+   Proportional, not absolute, and that distinction is what makes the caps read.
+   Fixed dips of up to 13 units under a cap only 12 units tall produced a shape
+   as deep below the line as above it: a floating diamond on the mountainside
+   rather than snow on a summit. Tied to the cap's own height, the ragged edge
+   stays subordinate to the triangle it is closing off, at any peak size. */
+const DIP = [0.18, 0.06, 0.28, 0.12, 0.22, 0.04, 0.16, 0.3, 0.1] as const;
+
+const caps: string[] = [];
+let i = 0;
+let dip = 0;
+
+while (i < ridge.length) {
+  if (ridge[i]![1] >= snowline) {
+    i++;
+    continue;
+  }
+
+  // A contiguous run of ridge above the snowline: one peak, or a high shoulder.
+  const start = i;
+  while (i < ridge.length && ridge[i]![1] < snowline) i++;
+  const end = i - 1;
+
+  const leftX =
+    start > 0 ? crossX(ridge[start - 1]!, ridge[start]!, snowline) : ridge[start]![0];
+  const rightX =
+    end < ridge.length - 1 ? crossX(ridge[end]!, ridge[end + 1]!, snowline) : ridge[end]![0];
+
+  const crest = ridge.slice(start, end + 1).map(([x, y]) => `L ${x} ${y}`).join(" ");
+
+  // How tall this cap stands above the snowline — the scale everything else
+  // about its lower edge is measured against.
+  const rise = snowline - Math.min(...ridge.slice(start, end + 1).map(([, y]) => y));
+
+  // Ragged lower edge, walked back right to left. Enough steps that the edge
+  // reads as broken rather than as two or three big teeth.
+  const span = rightX - leftX;
+  const steps = Math.max(4, Math.round(span / 9));
+  const edge: string[] = [];
+  for (let s = 1; s < steps; s++) {
+    const x = Math.round((rightX - (span * s) / steps) * 10) / 10;
+    const y = Math.round((snowline + rise * DIP[dip++ % DIP.length]!) * 10) / 10;
+    edge.push(`L ${x} ${y}`);
+  }
+
+  caps.push(`M ${leftX} ${snowline} ${crest} L ${rightX} ${snowline} ${edge.join(" ")} Z`);
+}
+---
+
+{/* Rock and snow share a group so one aerial-perspective fade covers both — the
+    snow has to lose contrast into the sky at the same rate the rock does, or it
+    reads as nearer than the mountain it sits on. */}
+<g class:list={["mg-range", className]}>
+  <path class="mg-range__rock" d={rock} />
+  {caps.map((d) => <path class="mg-range__snow" d={d} />)}
+</g>

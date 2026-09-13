@@ -1,0 +1,40 @@
+---
+/**
+ * Climber, seen head-on. One side is authored, the other is the same subtree
+ * mirrored; the contralateral pose comes from the angles in scene.css.
+ */
+import ClimberSide from "./ClimberSide.astro";
+---
+
+<g class="mg-climber">
+  {/* Headlamp beam — night only (scene.css toggles it on --mg-sky-night). Drawn
+      before the body so the near limbs occlude it, which is what a beam passing
+      the arm should do. All three cones share ONE apex, on the lamp on the head
+      (1.3,-25.6); they diverge symmetrically about a ~30°-above-horizontal axis
+      aimed into the wall, and each is capped with a convex arc where the light
+      meets the face. The pool is that same cap seen ON the wall — an ellipse
+      raked along the beam axis, sitting at the cones' end rather than floating. */}
+  <g class="mg-headlamp" aria-hidden="true">
+    <path class="mg-headlamp__cone mg-headlamp__cone--penumbra" d="M 1.3 -25.6 L 22.2 -29.3 Q 22.1 -37.6 15 -41.9 Z" />
+    <path class="mg-headlamp__cone mg-headlamp__cone--beam" d="M 1.3 -25.6 L 19.4 -31.15 Q 19.9 -36.35 15.2 -38.55 Z" />
+    <path class="mg-headlamp__cone mg-headlamp__cone--core" d="M 1.3 -25.6 L 17.05 -32.3 Q 18.2 -35.35 14.95 -35.9 Z" />
+    <ellipse class="mg-headlamp__pool" cx="16.5" cy="-34.3" rx="4.2" ry="2.3" transform="rotate(-30 16.5 -34.3)" />
+  </g>
+  <g class="mg-climber__body">
+    <g class="mg-cl-side--b" transform="scale(-1 1)"><ClimberSide /></g>
+    <path class="mg-limb mg-limb--fine" d="M -2.2 -13 L 2.2 -13" />
+    <path class="mg-torso" d="M 0 -13.2 C 0.4 -17, 0.3 -20, 0 -22.4" />
+    <path class="mg-limb mg-limb--fine" d="M -3.2 -21.4 L 3.2 -21.4" />
+    <circle class="mg-head" cx="0" cy="-24.6" r="1.9" />
+    <g class="mg-cl-side--a"><ClimberSide /></g>
+  </g>
+
+  {/* The lamp itself, drawn after the body so the head never covers it. The
+      housing is part of the climber's kit and shows in both schemes; the warm
+      lens and its glow light up only at night, with the beam. */}
+  <g class="mg-headlamp__unit" aria-hidden="true">
+    <circle class="mg-headlamp__housing" cx="1.2" cy="-25.7" r="0.85" />
+    <circle class="mg-headlamp__glow" cx="1.5" cy="-25.8" r="1.5" />
+    <circle class="mg-headlamp__lens" cx="1.5" cy="-25.8" r="0.55" />
+  </g>
+</g>

@@ -1,0 +1,26 @@
+---
+/**
+ * Conifers: a stepped triangle, generated from a list of [x, baseline, height].
+ *
+ * Bases sit a little below the ridge they stand on, so no gap opens where the
+ * hand-placed point and the curve disagree slightly. They are cut from the NEXT
+ * plane forward, so they silhouette against whatever lies behind their ridge.
+ */
+import { r1, type TreeSpec } from "./types";
+
+interface Props {
+  trees: readonly TreeSpec[];
+  class?: string;
+}
+
+const { trees, class: className = "" } = Astro.props;
+
+const path = ([x, y, h]: TreeSpec) =>
+  `M ${r1(x - h * 0.3)} ${y}
+   L ${r1(x - h * 0.09)} ${r1(y - h * 0.55)}
+   L ${x} ${r1(y - h)}
+   L ${r1(x + h * 0.09)} ${r1(y - h * 0.55)}
+   L ${r1(x + h * 0.3)} ${y} Z`;
+---
+
+{trees.map((t) => <path class={`mg-tree ${className}`.trim()} d={path(t)} />)}

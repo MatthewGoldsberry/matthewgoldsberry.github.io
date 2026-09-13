@@ -1,0 +1,19 @@
+---
+/** A row of technology tags. */
+interface Props {
+  items: readonly string[];
+  class?: string;
+}
+
+const { items, class: className = "" } = Astro.props;
+---
+
+<ul class:list={["mg-pills m-0 flex list-none flex-wrap gap-1 p-0", className]}>
+  {
+    items.map((item) => (
+      <li class="rounded-full border border-edge bg-bg-raised px-2.5 py-0.5 font-mono text-[0.66rem] tracking-[0.05em] whitespace-nowrap text-ink-muted">
+        {item}
+      </li>
+    ))
+  }
+</ul>

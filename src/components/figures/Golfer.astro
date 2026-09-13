@@ -1,0 +1,43 @@
+---
+/**
+ * Golfer at address with a driver, held as one composed pose.
+ *
+ * Sized off a real setup rather than by eye. Against a 25.6-unit figure at 70in,
+ * one unit is 2.73in, so: a 45in driver is ~16.5 units; hands sit ~35in up, or
+ * 12.8 units; and a shaft spanning that height at that length stands about 38
+ * degrees off vertical. Those three numbers fix the club, and the club fixes
+ * where the ball can be.
+ *
+ * The posture is the other half. At address with a driver the spine leans AWAY
+ * from the target and the head stays behind the ball — leaning into it is a
+ * follow-through, not a setup, and reads as reaching.
+ */
+---
+
+<g class="mg-golfer">
+  {/* Contact shadow, drawn first so the figure stands on it. Without one a
+      figure reads as pasted onto the landscape rather than standing in it —
+      the cheapest realism there is at this scale. */}
+  <ellipse class="mg-shadow" cx="0.5" cy="0" rx="10.5" ry="1.5" />
+
+  {/* Stance a little wider than the shoulders, knees soft, toes turned out:
+      a golfer at address is planted, not mid-stride. */}
+  <path class="mg-limb mg-part--far" d="M -1.2 -13.2 L -4 -7.2 L -5.6 -1.6 L -8.2 -0.6" />
+  <path class="mg-limb" d="M 1.2 -13.2 L 4 -7.2 L 5.6 -1.6 L 8.2 -0.6" />
+
+  {/* Spine tilted back off the ball, not forward over it */}
+  <path class="mg-torso" d="M 0 -13.2 C -0.5 -16, -1 -18.3, -1.4 -20.6" />
+  <path class="mg-limb mg-limb--fine" d="M -1.4 -20.6 L -1.9 -22.3" />
+  <circle class="mg-head" cx="-2.2" cy="-23.6" r="1.9" />
+
+  {/* Bill turned down the target line: he is looking at the ball */}
+  <path class="mg-brim" d="M -0.5 -23.9 L 1.9 -24.3" />
+
+  {/* Arms hang from the shoulders to a grip under the chin, and the shaft breaks
+      away from there. That break is what stops arms and club reading as one pole
+      from the shoulder to the ground. */}
+  <path class="mg-limb mg-part--far" d="M -1.4 -20.6 L -0.4 -17 L 2 -13.4" />
+  <path class="mg-limb" d="M -1.4 -20.6 L 0.9 -17.2 L 2 -13.4" />
+  <path class="mg-rod mg-rod--shaft" d="M 2 -13.4 L 12.3 -1.4" />
+  <path class="mg-rod mg-rod--head mg-rod--driver" d="M 11.6 -0.9 L 13.9 -2" />
+</g>

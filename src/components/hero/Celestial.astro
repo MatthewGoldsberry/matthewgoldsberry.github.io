@@ -1,0 +1,84 @@
+---
+/**
+ * The body in the sky: the moon at night, the sun by day.
+ *
+ * One object with two faces rather than two features. Both are in the markup and
+ * the scheme picks which renders, via `--mg-sky-night` / `--mg-sky-day` in
+ * global.css — the one thing the palette genuinely cannot express, because no
+ * colour turns a crescent into a disc. It is `display`, not `opacity`: the
+ * hidden one should not be composited at all, and at 0 opacity it still would.
+ *
+ * POSITIONED IN CSS, NOT IN THE SVG. Everything else in the sky is placed with
+ * percentage coordinates inside one full-bleed SVG, but this needs to MOVE
+ * between layouts — on a phone the plate fills the upper left, so the moon has
+ * to go somewhere else entirely — and a `<circle>`'s cx/cy are attributes that a
+ * media query cannot reach. Wrapping it in a positioned box makes the placement
+ * an ordinary two-line CSS override, and lets the drawing below use plain user
+ * units with no percentages in it at all.
+ *
+ * THE MOON IS GIBBOUS, cut by a mask rather than drawn as a lune: the terminator
+ * on a real moon is the edge of a circle seen at an angle, so subtracting an
+ * offset circle of the same radius gives exactly the right curve for free, and
+ * the phase is then one number — how far the two centres are apart.
+ *
+ * The maria are inside the mask, so they are clipped by the terminator like
+ * anything else on the surface. Drawn over it they would float on the dark limb
+ * and read as holes.
+ *
+ * The halo stays a full circle behind both faces. It is atmosphere, not surface,
+ * so it does not take the phase.
+ */
+---
+
+<div class="mg-celestial" aria-hidden="true">
+  <svg
+    class="mg-celestial__svg"
+    viewBox="0 0 120 120"
+    role="presentation"
+    focusable="false"
+  >
+    <defs>
+      {/* Both halos fade to nothing well inside their own circle: a glow that is
+          still carrying weight at its edge draws a visible rim, which is the one
+          thing a glow must not do. */}
+      <radialGradient class="mg-halo-moon" id="mg-halo-moon">
+        <stop offset="0.4" stop-opacity="0.5" />
+        <stop offset="0.68" stop-opacity="0.14" />
+        <stop offset="1" stop-opacity="0" />
+      </radialGradient>
+
+      <radialGradient class="mg-halo-sun" id="mg-halo-sun">
+        <stop offset="0.34" stop-opacity="0.62" />
+        <stop offset="0.6" stop-opacity="0.2" />
+        <stop offset="1" stop-opacity="0" />
+      </radialGradient>
+
+      {/* Phase. The dark circle is the same radius as the disc and offset up and
+          to the left; how far apart their centres sit IS the phase, and at 46
+          against a diameter of 68 that is a waxing gibbous. Move it toward the
+          disc for a crescent, away for a full moon. */}
+      <mask id="mg-moon-phase">
+        <circle cx="60" cy="60" r="34" fill="#fff" />
+        <circle cx="18" cy="41" r="34" fill="#000" />
+      </mask>
+    </defs>
+
+    <g class="mg-moon">
+      <circle class="mg-moon__halo" cx="60" cy="60" r="58" />
+      <g mask="url(#mg-moon-phase)">
+        <circle class="mg-moon__disc" cx="60" cy="60" r="34" />
+        {/* Maria. Large, soft and few — at this size the moon is about 60px
+            across on screen, and any more detail than three patches turns into
+            speckle rather than reading as markings. */}
+        <ellipse class="mg-moon__mare" cx="70" cy="48" rx="13" ry="10" />
+        <ellipse class="mg-moon__mare" cx="55" cy="74" rx="10" ry="8" />
+        <ellipse class="mg-moon__mare" cx="80" cy="72" rx="7" ry="6" />
+      </g>
+    </g>
+
+    <g class="mg-sun">
+      <circle class="mg-sun__halo" cx="60" cy="60" r="58" />
+      <circle class="mg-sun__disc" cx="60" cy="60" r="27" />
+    </g>
+  </svg>
+</div>

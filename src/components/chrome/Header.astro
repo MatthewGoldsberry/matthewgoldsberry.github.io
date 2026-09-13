@@ -1,0 +1,110 @@
+---
+/**
+ * Site header.
+ *
+ * A single row: the name on the left, the sections and the scheme toggle on the
+ * right. No logo mark — a satellite glyph next to a name that already says
+ * "flight software" three lines down was decoration doing a job the copy does
+ * better.
+ *
+ * It is sticky and translucent rather than fixed and opaque, so the pass at the
+ * top of the hero reads through it as the page starts to move.
+ *
+ * Each section link is full-height and carries its own bottom edge — a crisp
+ * accent bar for the current section, the same bar at rest opacity on hover —
+ * so it reads as a tab docked to the header's own border rather than a loose
+ * word floating above it. That's the site's one hairline-rule idiom (see
+ * `.mg-eyebrow`) applied to navigation instead of a soft rounded pill, which
+ * was the previous shape here and the one thing in the header that didn't
+ * belong to this "instrument panel" — every other rule on the site is a flat
+ * line, not a capsule.
+ *
+ * The header's own border-b doubles as a scroll-position readout: the script
+ * below fills it left to right with how far down the page you are. That
+ * replaced the OS scrollbar once that was hidden globally (see global.css) —
+ * a page still needs some obvious sign that it scrolls and roughly how much
+ * is left, and a real border the header already had is a more honest place
+ * to put that than a new floating bar competing with everything else. It's
+ * `position: absolute` and unmeasured (no width/height on the header itself
+ * changes) because `--mg-header-h` is a real measurement the hero's fold math
+ * depends on elsewhere — this must never add to it. */
+import { nav, site } from "../../data/site";
+import ThemeToggle from "./ThemeToggle.astro";
+
+const path = Astro.url.pathname;
+/** A section is current if the path is inside it, so a project page lights "Work". */
+const isCurrent = (href: string) => path === href || path.startsWith(href);
+---
+
+<header
+  class="sticky top-0 z-40 border-b border-edge bg-[color-mix(in_srgb,var(--color-bg)_88%,transparent)] backdrop-blur-md"
+>
+  <div
+    class="mx-auto flex h-[var(--mg-header-h)] w-full max-w-[90rem] items-stretch justify-between gap-4 px-4 sm:px-6"
+  >
+    <a
+      href="/"
+      class="flex items-center font-display text-[1.15rem] font-semibold tracking-[-0.01em] text-ink no-underline hover:text-accent-text"
+    >
+      {site.name}
+    </a>
+
+    <nav aria-label="Sections" class="flex items-stretch">
+      {
+        nav.map((item) => (
+          <a
+            href={item.href}
+            aria-current={isCurrent(item.href) ? "page" : undefined}
+            class:list={[
+              "relative flex items-center px-3 font-mono text-[0.7rem] tracking-[0.08em] uppercase no-underline transition-colors duration-150 ease-mg",
+              "after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:content-['']",
+              isCurrent(item.href)
+                ? "text-accent-text after:bg-accent"
+                : "text-ink-faint after:bg-transparent hover:text-ink hover:after:bg-edge-strong",
+            ]}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+
+      <span class="mx-2 my-2.5 w-px bg-edge" aria-hidden="true" />
+
+      <div class="flex items-center">
+        <ThemeToggle />
+      </div>
+    </nav>
+  </div>
+
+  <div id="scroll-progress" class="absolute inset-x-0 bottom-0 h-[2px] w-0 bg-accent" aria-hidden="true">
+  </div>
+</header>
+
+<script>
+  const bar = document.getElementById("scroll-progress");
+
+  /* rAF-throttled: a bare `scroll` listener can fire many times per frame,
+     and every one of those would otherwise force a style recalculation. */
+  let queued = false;
+
+  const update = () => {
+    const doc = document.documentElement;
+    const scrollable = doc.scrollHeight - doc.clientHeight;
+    const fraction = scrollable > 0 ? Math.min(1, doc.scrollTop / scrollable) : 0;
+    if (bar) bar.style.width = `${fraction * 100}%`;
+    queued = false;
+  };
+
+  document.addEventListener(
+    "scroll",
+    () => {
+      if (!queued) {
+        queued = true;
+        requestAnimationFrame(update);
+      }
+    },
+    { passive: true },
+  );
+
+  update();
+</script>

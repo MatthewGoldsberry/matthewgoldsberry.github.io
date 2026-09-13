@@ -1,0 +1,42 @@
+---
+/**
+ * The two craft on the one ground track: LEOPARDSat-1, a plain cube, and
+ * HABSat-1, a tower three cubes tall trailing it. The seams are what make the
+ * tall one read as three rather than as a slab.
+ */
+interface Props {
+  kind: "cube" | "tower";
+  scale: number;
+}
+
+const { kind, scale: s } = Astro.props;
+---
+
+{
+  kind === "cube" ? (
+    <rect
+      class="mg-sat__body"
+      x={-5 * s}
+      y={-5 * s}
+      width={10 * s}
+      height={10 * s}
+      rx={1.2 * s}
+    />
+  ) : (
+    <>
+      <rect
+        class="mg-sat__body"
+        x={-5 * s}
+        y={-15 * s}
+        width={10 * s}
+        height={30 * s}
+        rx={1.2 * s}
+      />
+      <path
+        class="mg-sat__seam"
+        d={`M ${-5 * s} ${-5 * s} L ${5 * s} ${-5 * s}
+            M ${-5 * s} ${5 * s} L ${5 * s} ${5 * s}`}
+      />
+    </>
+  )
+}

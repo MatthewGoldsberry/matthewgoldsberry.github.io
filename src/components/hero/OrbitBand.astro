@@ -1,0 +1,63 @@
+---
+/**
+ * The pass — LEOPARDSat-1 and HABSat-1 crossing the top of the hero.
+ *
+ * Its own band rather than a graphic inside a larger scene: it is full bleed, it
+ * sets the page's altitude before any copy arrives, and the two craft stay
+ * hoverable without anything below having to make room. It opens the page
+ * because these are work, not ornament.
+ *
+ * Two layouts, only ever one displayed. Fitted to a phone the wide band would
+ * draw a call sign narrower than its own tracking, so the narrow one carries the
+ * same two craft over a shorter, steeper arc. Both draw the same components, so
+ * a spot key maps to two elements in the DOM and only the visible one can be
+ * hovered — nothing in the hover layer needs to know which layout is up.
+ *
+ * The two `path` values below are duplicated as `offset-path` in scene.css.
+ * They are the same curve seen from the two sides of the problem: here it is the
+ * dashed track the eye follows, there it is the rail the craft ride. Change one
+ * and you must change the other.
+ *
+ * BOX DEPTH. Both viewBoxes are deeper than the arc needs, and the slack is all
+ * below the track. HABSat-1 is a tower three cubes tall — 39 units at the wide
+ * layout's scale — and it rides the path centred on its own middle, so at the
+ * ends of the pass, where the arc bottoms out at y=66, it reached y=86.4 and the
+ * bottom two cubes were cut off by the viewport edge. `offset-rotate: auto` adds
+ * to that: the craft banks about 11 degrees at the ends, which widens its
+ * vertical footprint rather than narrowing it.
+ *
+ * The fix is depth, not a flatter arc: the curve keeps its exact shape and its
+ * exact coordinates, so the `offset-path` in scene.css still matches. The band
+ * simply extends further below the track. Anything that changes the craft's
+ * scale, or lowers the arc's endpoints, has to re-check this clearance.
+ */
+import Craft from "../figures/Craft.astro";
+---
+
+<div class="mg-hero__orbit pointer-events-none relative z-0 w-full shrink-0" aria-hidden="true">
+  <svg
+    class="mg-orbit__svg mg-orbit__svg--wide block h-auto w-full max-md:hidden"
+    viewBox="0 0 1200 90"
+    preserveAspectRatio="xMidYMid meet"
+    role="presentation"
+    focusable="false"
+  >
+    <path class="mg-track" d="M -20 66 C 260 10, 940 10, 1220 66" />
+
+    <Craft spot="leopardsat" kind="cube" label="LEOPARDSAT-1" scale={1.55} />
+    <Craft spot="habsat" kind="tower" label="HABSat-1" scale={1.55} trailing />
+  </svg>
+
+  <svg
+    class="mg-orbit__svg mg-orbit__svg--tall hidden h-auto w-full max-md:block"
+    viewBox="0 0 420 96"
+    preserveAspectRatio="xMidYMid meet"
+    role="presentation"
+    focusable="false"
+  >
+    <path class="mg-track" d="M -10 76 C 90 12, 330 12, 430 76" />
+
+    <Craft spot="leopardsat" kind="cube" label="LEOPARDSAT-1" scale={1.3} />
+    <Craft spot="habsat" kind="tower" label="HABSat-1" scale={1.3} trailing />
+  </svg>
+</div>

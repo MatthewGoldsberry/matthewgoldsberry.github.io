@@ -1,0 +1,21 @@
+---
+/**
+ * A two-segment leg chain: thigh, then shin, then foot, each nested inside the
+ * joint above it. Rotation origins are declared once in scene.css — see the
+ * skeleton note in types.ts.
+ */
+interface Props {
+  /** Side and depth classes, e.g. "mg-leg--far mg-part--far". */
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props;
+---
+
+<g class={`mg-leg ${className}`.trim()}>
+  <path class="mg-limb" d="M 0 -13.2 L 0 -7.2" />
+  <g class="mg-leg__shin">
+    <path class="mg-limb" d="M 0 -7.2 L 0 -1.6" />
+    <g class="mg-leg__foot"><path class="mg-limb" d="M 0 -1.6 L 3.2 -0.5" /></g>
+  </g>
+</g>

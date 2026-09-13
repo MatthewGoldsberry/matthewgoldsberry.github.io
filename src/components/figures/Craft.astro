@@ -1,0 +1,53 @@
+---
+/**
+ * One craft on the pass: the body, and its call sign riding the same path on a
+ * separate rider.
+ *
+ * Two riders rather than one group, because they need different banking. The
+ * body takes `offset-rotate: auto` so it stays square to the track and banks
+ * through the ends of the pass; the label overrides that to stay level, because
+ * type that tipped with the hull would be harder to read for nothing. Both are
+ * marked with the same spot key, so hovering either one lights both — see the
+ * `.mg-sat--tag` rules in scene.css.
+ *
+ * The label trails the craft rather than leading it, which is the side the pass
+ * is coming from, and rides a little above it so the dashed track does not run
+ * through the type.
+ */
+import Spot from "./Spot.astro";
+import SatBody from "./SatBody.astro";
+import type { SpotKey } from "./types";
+
+interface Props {
+  spot: SpotKey;
+  kind: "cube" | "tower";
+  /** Displayed call sign. Not uppercased in CSS — the names carry their own casing. */
+  label: string;
+  scale: number;
+  /** The trailing craft, delayed half a period down the same track. */
+  trailing?: boolean;
+}
+
+const { spot, kind, label, scale: s, trailing = false } = Astro.props;
+
+const rider = trailing ? "mg-sat mg-sat--b" : "mg-sat";
+
+// The body's box is drawn around its own centre; the tower is three cubes tall.
+const bodyHit = kind === "cube" ? ([-17, -17, 34, 34] as const) : ([-17, -28, 34, 56] as const);
+
+// The label is the easier thing to catch: it is wider than the craft and it does
+// not bank. Hovering it does what hovering the craft does.
+const tagHit = [-5 * s - 69, -17, 62, 16] as const;
+---
+
+<g class={rider}>
+  <Spot spot={spot} place="below" pause hit={bodyHit}>
+    <SatBody kind={kind} scale={s} />
+  </Spot>
+</g>
+
+<g class={`${rider} mg-sat--tag`}>
+  <Spot spot={spot} place="below" pause hit={tagHit}>
+    <text class="mg-sat__tag" x={-5 * s - 7} y="-9">{label}</text>
+  </Spot>
+</g>

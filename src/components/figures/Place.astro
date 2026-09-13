@@ -1,0 +1,23 @@
+---
+/**
+ * A plain positioning wrapper: translate, then scale.
+ *
+ * Exists so that no figure ever carries its own placement. A CSS `transform`
+ * overrides an element's `transform` attribute, so a figure that both animated
+ * and positioned itself would lose its position the moment a keyframe touched
+ * it. Wrapping instead keeps the two on separate elements by construction, and
+ * is why the joint origins in scene.css can be written in local units.
+ */
+interface Props {
+  x: number;
+  y: number;
+  /** Uniform scale. The figures are authored at one canonical size. */
+  scale?: number;
+  class?: string;
+}
+
+const { x, y, scale = 1, class: className } = Astro.props;
+const transform = scale === 1 ? `translate(${x} ${y})` : `translate(${x} ${y}) scale(${scale})`;
+---
+
+<g transform={transform} class={className}><slot /></g>

@@ -1,0 +1,56 @@
+---
+/**
+ * Site footer — a colophon and the social row.
+ *
+ * Kept to one line of type and four glyphs. The closing contact band above it
+ * carries the actual ask on pages that have one; this is the fallback for
+ * everywhere else.
+ */
+import { socials } from "../../data/site";
+import Icon from "../ui/Icon.astro";
+
+interface Props {
+  /** The landing page only: a shallower row so it doesn't eat into the one
+   *  screen it shares with the header and the scene. */
+  compact?: boolean;
+}
+
+const { compact = false } = Astro.props;
+
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-edge">
+  <div
+    class:list={[
+      "mx-auto flex w-full max-w-page flex-wrap items-center justify-between gap-5 px-5 font-mono text-label tracking-[0.05em] text-ink-faint",
+      compact ? "py-3" : "py-8",
+    ]}
+  >
+    <small>
+      &copy; {year} Matthew Goldsberry. Built with{" "}
+      <a
+        href="https://astro.build"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-ink-muted no-underline hover:text-accent-text">Astro</a
+      >.
+    </small>
+
+    <div class="flex items-center gap-5">
+      {
+        socials.map((link) => (
+          <a
+            href={link.href}
+            aria-label={link.label}
+            target={link.href.startsWith("mailto:") ? undefined : "_blank"}
+            rel={link.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
+            class="inline-flex text-ink-faint transition-[color,transform] duration-150 ease-mg hover:text-accent-text motion-safe:hover:-translate-y-0.5"
+          >
+            <Icon name={link.icon} />
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</footer>

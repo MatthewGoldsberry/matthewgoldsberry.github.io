@@ -1,0 +1,21 @@
+---
+/** A tuft of bankside grass. Sways on its own clock — see scene.css. */
+interface Props {
+  x: number;
+  y: number;
+  scale?: number;
+}
+
+const { x, y, scale = 1 } = Astro.props;
+---
+
+<g transform={`translate(${x} ${y}) scale(${scale})`}>
+  <g class="mg-tuft">
+    <path
+      class="mg-grass"
+      d="M 0 0 C -0.8 -2, -1.8 -3.2, -3 -4.2
+         M 0 0 C 0.1 -2.4, 0.4 -3.8, 1.2 -5.4
+         M 0 0 C 1 -1.8, 2 -2.8, 3.2 -3.6"
+    />
+  </g>
+</g>

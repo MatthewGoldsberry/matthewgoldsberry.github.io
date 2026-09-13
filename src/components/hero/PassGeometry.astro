@@ -1,0 +1,227 @@
+---
+/**
+ * The two numbers about the pass that cannot be written down.
+ *
+ *   1. WHERE THE PASS ENDS. The cliff layer spans the whole hero and leans out
+ *      to the left as it rises, so it crosses the orbit band somewhere in from
+ *      the right edge and paints over it. Everything the craft does past that
+ *      line happens behind opaque rock. Where the line falls in the band's own
+ *      coordinates depends on the hero's height against its width — the layer is
+ *      `slice`, so a shorter window shows less of the wall and the arete meets
+ *      the band further right. So the travel is cut at the rock rather than at
+ *      the edge of the viewBox: `--mg-pass-end` is the offset-distance at which
+ *      the craft and its call sign are both fully behind the arete, and
+ *      `mg-orbit` in scene.css ends the pass there.
+ *
+ *   2. WHERE THE ARRAY IS POINTING. The array's sweep used to be nine
+ *      hand-measured keyframes. The orbit band and the panorama are laid out
+ *      independently, so the bearing from the mast head to a point on the arc
+ *      depends on the gap between them, which moves with viewport width,
+ *      viewport height and the copy's height. Every measurement was therefore an
+ *      average that was wrong everywhere by a couple of degrees, and any change
+ *      to either band silently made it wrong by more — the band's viewBox was
+ *      deepened once and the aim drifted 8.6 degrees before anyone looked.
+ *
+ * Both fall out of the same geometry, and the second depends on the first: the
+ * nine bearings have to be sampled over the arc the craft actually flies, so
+ * they are computed together, in one pass, from the DOM.
+ *
+ * The dashed track in the orbit band is the same curve the craft rides — the
+ * `offset-path` in scene.css is a copy of that `d` — which means
+ * `getPointAtLength` on it gives the craft's real position at any point in the
+ * pass. `getScreenCTM` puts that, the mast head and the arete in one space.
+ *
+ * COST. This does not run per frame. It writes one property on each band and
+ * nine on each array, and the existing CSS keyframes interpolate between them,
+ * so the animation stays on the compositor exactly as before; the script only
+ * re-runs when the geometry can actually have changed, which is on load and on
+ * resize. The keyframes carry fallbacks, so with JavaScript off the aim is
+ * approximately right and the pass runs to the end of the path as it used to.
+ */
+---
+
+<script>
+  /* The pass occupies the first 92% of the cycle; the last 8% is the dark gap,
+     when the array slews back. Nine bearings, evenly spread over the pass —
+     matching the stops in `mg-track-wide` and `mg-track-narrow`. */
+  const STOPS = 9;
+
+  /** Where the craft rests when nothing is animating — see `.mg-sat` in scene.css. */
+  const PARKED_DISTANCE = 0.68;
+
+  /** The mast head, in the station group's local units. Matches Station.astro. */
+  const MAST: readonly [number, number] = [0, -38];
+
+  /**
+   * The outermost lip, in the cliff group's local units. x = 0 is the arete and
+   * the drawn profile jitters a few units either side of it (see Cliff.astro),
+   * so the test line is taken at the leftmost of that wander: the craft has to
+   * clear the furthest the rock reaches out, not its mean.
+   */
+  const LIP_X = -6;
+
+  type Layout = { band: string; cliff: string; scene: string };
+
+  const LAYOUTS: readonly Layout[] = [
+    {
+      band: ".mg-orbit__svg--wide",
+      cliff: ".mg-cliff-layer__svg--wide",
+      scene: ".mg-horizon__svg--wide",
+    },
+    {
+      band: ".mg-orbit__svg--tall",
+      cliff: ".mg-cliff-layer__svg--narrow",
+      scene: ".mg-horizon__svg--narrow",
+    },
+  ];
+
+  /** Bearing in degrees from `from` to `to`, measured clockwise off vertical. */
+  function bearing(from: DOMPoint, to: DOMPoint): number {
+    return (Math.atan2(to.x - from.x, from.y - to.y) * 180) / Math.PI;
+  }
+
+  function at(
+    owner: SVGSVGElement,
+    ctm: DOMMatrix,
+    x: number,
+    y: number,
+  ): DOMPoint {
+    const local = owner.createSVGPoint();
+    local.x = x;
+    local.y = y;
+    return local.matrixTransform(ctm);
+  }
+
+  /**
+   * How far the craft's rearmost edge sits behind the point on the path, in the
+   * band's own units. Read off the hit boxes rather than hard-coded: the call
+   * sign trails the hull by about five body-widths, and it is the last thing to
+   * go behind the rock. Both riders carry the leading craft's key.
+   */
+  function trailingExtent(band: Element): number {
+    const rects = band.querySelectorAll<SVGRectElement>(
+      ".mg-sat:not(.mg-sat--b) .mg-spot__hit",
+    );
+    let extent = 0;
+    for (const rect of rects) extent = Math.min(extent, rect.x.baseVal.value);
+    return extent;
+  }
+
+  /**
+   * The fraction of the path at which the craft is fully behind the cliff.
+   *
+   * The arete is a straight line once it is on screen, so which side of it a
+   * point is on is the sign of one cross product; the sign that means "in the
+   * rock" is taken from a point known to be inside the mass rather than assumed,
+   * because it depends on the layer's rotation. The craft's x along the path is
+   * monotonic, so a bisection finds the crossing.
+   *
+   * Returns 1 when the rock never reaches the band — nothing to hide behind, so
+   * the pass runs to the end of the path.
+   */
+  function passEnd(
+    band: SVGSVGElement,
+    track: SVGPathElement,
+    trackCTM: DOMMatrix,
+    cliff: string,
+  ): number {
+    const svg = document.querySelector<SVGSVGElement>(cliff);
+    const group = svg?.querySelector<SVGGElement>(".mg-cliff");
+    const cliffCTM = group?.getScreenCTM();
+    if (!svg || !group || !cliffCTM) return 1;
+
+    /* Two points up the lip, and one back in the rock to fix the sign. */
+    const a = at(svg, cliffCTM, LIP_X, 0);
+    const b = at(svg, cliffCTM, LIP_X, -100);
+    const inside = at(svg, cliffCTM, LIP_X + 100, 0);
+
+    const side = (px: number, py: number) =>
+      (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
+    const rock = Math.sign(side(inside.x, inside.y));
+
+    /* The rearmost edge is what has to clear the lip, in screen pixels: the band
+       is `meet` with no rotation, so one local unit is `trackCTM.a` pixels. */
+    const tail = trailingExtent(band) * trackCTM.a;
+
+    const length = track.getTotalLength();
+    const hidden = (fraction: number) => {
+      const p = track.getPointAtLength(length * fraction).matrixTransform(trackCTM);
+      return Math.sign(side(p.x + tail, p.y)) === rock;
+    };
+
+    /* Nothing to hide behind, or nothing but: neither leaves an arc to cut, and
+       a bisection over either would return a pass of no length at all. */
+    if (!hidden(1) || hidden(0)) return 1;
+
+    let lo = 0;
+    let hi = 1;
+    for (let i = 0; i < 24; i++) {
+      const mid = (lo + hi) / 2;
+      if (hidden(mid)) hi = mid;
+      else lo = mid;
+    }
+    return hi;
+  }
+
+  function measure(layout: Layout): void {
+    const band = document.querySelector<SVGSVGElement>(layout.band);
+    const track = band?.querySelector<SVGPathElement>(".mg-track");
+    const scene = document.querySelector<SVGSVGElement>(layout.scene);
+    const antenna = scene?.querySelector<SVGGElement>(".mg-antenna");
+    const pedestal = antenna?.parentNode as SVGGraphicsElement | null;
+    if (!band || !track || !scene || !antenna || !pedestal) return;
+
+    /* A hidden layout has no layout box, so its CTM is null. Skip it: the other
+       layout is the one on screen, and this re-runs on resize when they swap. */
+    const trackCTM = track.getScreenCTM();
+    const pedestalCTM = pedestal.getScreenCTM();
+    if (!trackCTM || !pedestalCTM) return;
+
+    const end = passEnd(band, track, trackCTM, layout.cliff);
+    band.style.setProperty("--mg-pass-end", `${(end * 100).toFixed(2)}%`);
+
+    const mast = at(scene, pedestalCTM, MAST[0], MAST[1]);
+    const length = track.getTotalLength();
+    const aim = (fraction: number) =>
+      bearing(mast, track.getPointAtLength(length * fraction).matrixTransform(trackCTM));
+
+    /* Sampled over the arc the craft actually flies, which now stops at the
+       rock — an array still swinging out to the edge of the box would be aiming
+       at a craft that is no longer being drawn there. */
+    for (let i = 0; i < STOPS; i++) {
+      antenna.style.setProperty(
+        `--mg-track-${i}`,
+        `${aim((i / (STOPS - 1)) * end).toFixed(2)}deg`,
+      );
+    }
+    antenna.style.setProperty("--mg-track-parked", `${aim(PARKED_DISTANCE).toFixed(2)}deg`);
+  }
+
+  function measureAll(): void {
+    for (const layout of LAYOUTS) measure(layout);
+  }
+
+  /* Layout has to have settled, or the mast is measured against a box that is
+     about to move. Fonts are the usual culprit: they change the copy's height,
+     which moves the station down the page. */
+  const start = () => {
+    measureAll();
+    document.fonts?.ready.then(measureAll);
+  };
+
+  if (document.readyState === "complete") start();
+  else window.addEventListener("load", start, { once: true });
+
+  /* Coalesced to one recompute per frame: a drag-resize fires continuously, and
+     each pass does a handful of layout reads. */
+  let queued = 0;
+  const schedule = () => {
+    if (queued) return;
+    queued = requestAnimationFrame(() => {
+      queued = 0;
+      measureAll();
+    });
+  };
+
+  window.addEventListener("resize", schedule, { passive: true });
+</script>

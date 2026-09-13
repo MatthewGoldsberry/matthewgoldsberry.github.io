@@ -1,0 +1,115 @@
+---
+/**
+ * The landing page's skills ticker.
+ *
+ * This is the old "What I work with" grid, compressed into a strip between the
+ * scene and the footer instead of a section of its own — a footnote, not
+ * something asking to be read. All four groups flatten into one line because a
+ * ticker has no room for headings; the full ~25 items never fit one line at a
+ * readable size on any standard window, so the scroll is unconditional rather
+ * than gated behind a JS overflow check the site would otherwise ship no
+ * differently for.
+ *
+ * Pure CSS — the site's one JS island is SpotCards, and this doesn't need to
+ * be a second one. The list renders twice back to back and the keyframe walks
+ * exactly one copy's width, so the loop has no seam.
+ */
+import { skills } from "../../data/site";
+
+const items = skills.flatMap((group) => group.items);
+---
+
+<div class="mg-skillbar">
+  {/* The one thing here for a screen reader: the marquee copies below are
+      `aria-hidden`, so without this the whole bar would read as empty. */}
+  <p class="sr-only">Technologies: {items.join(", ")}.</p>
+
+  <div class="mg-skillbar__track" aria-hidden="true">
+    {
+      [0, 1].map((_copy) => (
+        <ul class="mg-skillbar__list">
+          {items.map((item) => (
+            <li>{item}</li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .mg-skillbar {
+    flex: none;
+    overflow: hidden;
+    border-top: 1px solid var(--color-edge);
+    background: var(--mg-bg-raised);
+    /* Fades the ticker into the edges rather than clipping a word mid-scroll. */
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 2.5rem,
+      #000 calc(100% - 2.5rem),
+      transparent 100%
+    );
+  }
+
+  .mg-skillbar__track {
+    display: flex;
+    width: max-content;
+  }
+
+  /* Paused by default, and only ever released behind reduced-motion below —
+     the static first frame (half the list, cut off by the mask) is a
+     legitimate rest pose on its own, same as everything else in the scene. */
+  .mg-skillbar__list {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 1.75rem;
+    margin: 0;
+    padding: 0.25rem 1.75rem;
+    list-style: none;
+    white-space: nowrap;
+  }
+
+  .mg-skillbar__list li {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+  }
+
+  .mg-skillbar__list li:not(:last-child) {
+    position: relative;
+  }
+
+  .mg-skillbar__list li:not(:last-child)::after {
+    content: "·";
+    margin-left: 1.75rem;
+    color: var(--color-edge-strong);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .mg-skillbar__track {
+      animation: mg-skillbar-scroll 75s linear infinite;
+    }
+
+    /* A hover is a reader who stopped to look at one — let them. */
+    .mg-skillbar:hover .mg-skillbar__track {
+      animation-play-state: paused;
+    }
+  }
+
+  @keyframes mg-skillbar-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      /* Exactly one of the two rendered copies: the loop point is invisible
+         because the frame it lands on is identical to the frame it started on. */
+      transform: translateX(-50%);
+    }
+  }
+</style>

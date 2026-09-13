@@ -1,0 +1,58 @@
+---
+/**
+ * A hoverable figure: the group the hover layer watches, plus (usually) the hit
+ * box that makes it catchable.
+ *
+ * `spot` is the routing key — it lands on `data-spot` here and on `data-card`
+ * on the matching card, and the type is a closed union, so a key that does not
+ * exist fails the build instead of rendering a figure whose card never opens.
+ *
+ * Two shapes, because the compositions need both:
+ *
+ *   - Positioned, with its own hit box. The common case: pass x/y/scale and
+ *     `hit`, and the figure goes inside.
+ *   - Bare. Used where the spot has to enclose more than the figure — the
+ *     climber's spot also covers the rope and the protection, so those dim with
+ *     them, while the hit box stays down in the climber's own transform to keep
+ *     the target on the body rather than spread over the length of the rope.
+ */
+import Hit from "./Hit.astro";
+import type { SpotKey, SpotPlacement } from "./types";
+
+interface Props {
+  spot: SpotKey;
+  /** Which side the card opens on. Spots near the top of a frame want "below". */
+  place?: SpotPlacement;
+  /**
+   * Hold the pass while this card is open. A moving target is a bad target: the
+   * craft are small, they are crossing the frame, and the antenna is aimed at
+   * them, so hovering any part of that system holds all of it.
+   */
+  pause?: boolean;
+  x?: number;
+  y?: number;
+  scale?: number;
+  /** Hit box in this group's local units: [x, y, width, height]. */
+  hit?: readonly [number, number, number, number];
+}
+
+const { spot, place, pause = false, x, y, scale = 1, hit } = Astro.props;
+
+const positioned = x !== undefined && y !== undefined;
+const transform = positioned
+  ? scale === 1
+    ? `translate(${x} ${y})`
+    : `translate(${x} ${y}) scale(${scale})`
+  : undefined;
+---
+
+<g
+  class="mg-spot"
+  data-spot={spot}
+  data-place={place}
+  data-pause={pause ? "orbit" : undefined}
+  transform={transform}
+>
+  {hit && <Hit x={hit[0]} y={hit[1]} width={hit[2]} height={hit[3]} />}
+  <slot />
+</g>

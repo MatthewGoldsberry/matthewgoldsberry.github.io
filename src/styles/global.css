@@ -1,0 +1,585 @@
+/* ==========================================================================
+   Global stylesheet — palette, Tailwind theme, and the prose defaults.
+
+   Three layers, in order:
+
+     1. The raw palette. One `light-dark()` pair per colour, so a value is
+        spelled once instead of once per scheme.
+     2. `@theme`, which lifts those into Tailwind's namespaces so `bg-surface`,
+        `text-ink-muted`, `font-display` and friends exist as utilities.
+     3. Base element defaults and the `.prose-mg` overrides that style rendered
+        Markdown, which cannot carry classes of its own.
+
+   The figure and landscape paint lives in scene.css — it is SVG stroke and
+   joint geometry, which has no utility expression. See the header there.
+   ========================================================================== */
+
+@import "tailwindcss";
+/* The class vocabulary Markdown bodies are allowed to use. Imported before the
+   plugin so every `@import` stays ahead of the first rule, as CSS requires. */
+@import "./content.css";
+
+@plugin "@tailwindcss/typography";
+
+/* --------------------------------------------------------------------------
+   Palette — "mission control"
+   Cool slate ground, one warm instrument accent, mono for readouts.
+
+   `light-dark()` reads the element's own `color-scheme`, so the whole palette
+   follows the system preference by default and the toggle below overrides it by
+   narrowing that property rather than by restating every colour. That is what
+   keeps this one list instead of the two parallel ones it used to be.
+   -------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light dark;
+
+  --mg-bg: light-dark(#f7f8fa, #0a0f1a);
+  --mg-bg-raised: light-dark(#ffffff, #111827);
+  --mg-surface: light-dark(#ffffff, #131b2b);
+  --mg-surface-hover: light-dark(#fbfcfd, #182238);
+  --mg-border: light-dark(#e0e5ec, #232e44);
+  --mg-border-strong: light-dark(#c6cedb, #33405c);
+
+  --mg-ink: light-dark(#0f1722, #e9eef7);
+  --mg-ink-muted: light-dark(#52607a, #97a3b8);
+  --mg-ink-faint: light-dark(#7c8798, #66738c);
+
+  /* Graphic accent — illustration strokes, rules, glows */
+  --mg-accent: light-dark(#f59e0b, #ffb020);
+  /* Text accent — darkened on the light ground so it clears AA against --mg-bg */
+  --mg-accent-text: light-dark(#a35a06, #ffc04d);
+  --mg-accent-soft: light-dark(rgb(245 158 11 / 0.13), rgb(255 176 32 / 0.14));
+  --mg-accent-line: light-dark(rgb(245 158 11 / 0.42), rgb(255 176 32 / 0.32));
+
+  /* Casing drawn around every hero figure so the amber keeps a hard edge on any
+     background it crosses — the pale sky and warm terrain in light mode above
+     all, where the accent's value sits close to the ground it stands on.
+     Scheme-aware: a warm near-black outline by day, a faint warm rim by night
+     (where the figures read as the lit focal points). Applied as a doubled
+     sub-pixel drop-shadow in scene.css. */
+  --mg-figure-edge: light-dark(rgb(24 17 4 / 0.7), rgb(255 244 216 / 0.26));
+
+  /* Orbital / machine — darkened on light to hold contrast on a near-white ground. */
+  --mg-signal: light-dark(#12799e, #78cce4);
+  --mg-signal-soft: light-dark(rgb(18 121 158 / 0.14), rgb(120 204 228 / 0.16));
+
+  /* The river. Its own colour, not --mg-signal: an OPAQUE colder alpine water
+     that sits over the ground rather than letting it show through, and reads as
+     water at both times of day — a deep lake teal by morning, a muted dark teal
+     under moonlight, never the neon cyan the signal token goes on dark. The
+     glint is the pale of the sky caught on the surface; it is the only thing
+     drawn over the water, so it has to be lighter than the water in both
+     schemes. The far end still dissolves into the hills, but by the fade
+     gradient in Horizon.astro, not by making the whole fill see-through. */
+  --mg-water: light-dark(#3a8ca8, #24576a);
+  --mg-water-glint: light-dark(#bfe0ea, #5f97ab);
+
+  /* The sky is a time of day, not a flat panel. Light: a cool pale zenith settling
+     onto a faintly warm haze at the horizon — the light a low morning sun throws
+     into a valley. Dark: near-black overhead easing into a thin teal air-glow just
+     above the skyline. The gradient between the two lives in Hero.astro. */
+  --mg-sky-top: light-dark(#d6e2f2, #05090f);
+  --mg-sky-bottom: light-dark(#f3ede1, #0f2530);
+  /* Six depth planes, not three. Each is a step of aerial perspective toward
+     the viewer, so the values have to march in one direction: on dark they get
+     progressively darker as they come forward, on light progressively deeper.
+     Keep the ordering if you retune them — it is the ordering, not the exact
+     values, that produces the depth. The steps between them were widened when
+     the band went to five planes: at three they could sit close together, but
+     five values inside the same narrow range read as one muddy mass rather
+     than as a recession. The foothills were added inside that spread rather
+     than beyond it, so the march is still monotonic end to end. */
+  /* The hue rotates warmer and gains a little chroma as the planes come forward,
+     while the luminance still steps down in order: distance reads as blue because
+     that is what air does to it, the near ground reads as sunlit vegetation. On
+     dark the same recession is carried in cooler marine tones. */
+  --mg-terrain-far: light-dark(#c3d1e2, #2a333f);
+  --mg-terrain-far-b: light-dark(#b1c1d5, #212a35);
+  /* Rolling foothills: the plane between the second range and the mid ground. */
+  --mg-terrain-hill: light-dark(#a5b3c2, #1a232f);
+  --mg-terrain-mid: light-dark(#99a8a4, #141e28);
+  --mg-terrain-near: light-dark(#8b977b, #0d1620);
+  /* The near bank, closest of all — the strip the foreground figures stand on. */
+  --mg-terrain-fore: light-dark(#817b58, #070c12);
+  /* The cliff is the only mass silhouetted against bare sky rather than against
+     the plane behind it, so it needs its own values — and it is SANDSTONE: a
+     warm, stratified stone that takes open skylight on its lit faces and goes
+     deep umber in every hollow. It still has to belong to this landscape: on
+     light it sits at the warm end of the terrain value band (a sunlit vertical
+     face genuinely is lighter than the shadowed ground at its foot, which is
+     what lets it be this pale and still read as the nearest mass); on dark it
+     stays a restrained warm mass, never a black cut-out.
+
+       --mg-cliff        base face, mid-lit
+       --mg-cliff-lit    arete and upper wall, catching the most sky
+       --mg-cliff-core   overhung hollows and the shaded back of the mass
+       --mg-cliff-band   iron-rich bedding planes — the strata that read as sandstone
+       --mg-cliff-streak desert-varnish weathering, hung off the ledges and the lip
+       --mg-cliff-line   crack and fracture lines, a warm near-black
+
+     Separation from the sky is carried by hue, by the vertical face gradient
+     (mg-cliff-lg, stops from these tokens) and by the lit arete (mg-lip); the
+     grain filter, bedding and streaks in scene.css / Cliff.astro model the
+     surface itself. */
+  --mg-cliff: light-dark(#c2a476, #241f1a);
+  --mg-cliff-lit: light-dark(#e3cea8, #3b322a);
+  --mg-cliff-core: light-dark(#977851, #120e0a);
+  --mg-cliff-band: light-dark(#9a6236, #120c07);
+  --mg-cliff-streak: light-dark(#4a3117, #0b0806);
+  --mg-cliff-line: light-dark(#3d2a15, #070605);
+  /* Snow on the far peaks. The one terrain value that does NOT invert with the
+     scheme: snow is pale in daylight and pale under moonlight, so borrowing
+     --mg-ink the way the rest of the terrain detail does would turn it black by
+     day. Both values are pulled well back toward their own terrain: this is a
+     distant range, so the snow should read as a pale patch on a far summit and
+     never as a highlight — at full white it was the brightest thing on the page
+     and took the eye straight off the figures in the foreground. */
+  --mg-snow: light-dark(#fdfaf4, #a6b5cd);
+
+  /* The sky's own objects. Each is only ever painted under one scheme — the moon
+     and the galaxy at night, the sun by day — so unlike everything above them
+     these are flat values rather than light-dark() pairs. Pairing them would be
+     writing a colour that can never be seen.
+
+     The moon is warmer than --mg-snow on purpose: snow is lit BY it and should
+     stay the cooler of the two, or the peaks read as the brighter object. */
+  --mg-moon: #dee3f1;
+  --mg-moon-mare: #97a3bd;
+  --mg-milkyway: #b6c6e8;
+  /* A low morning sun: paler and less saturated than the instrument accent, so it
+     reads as light rather than as another amber mark on the page. */
+  --mg-sun: #ffd47f;
+
+  --mg-shadow: light-dark(
+    0 14px 32px -18px rgb(15 23 34 / 0.28),
+    0 18px 40px -18px rgb(0 0 0 / 0.85)
+  );
+
+  /* A card's resting shadow — present before any hover, so a white card on the
+     near-white light background still reads as a raised surface rather than a
+     border-only outline. Lighter than `--mg-shadow`, which is reserved for the
+     hover lift. Two layers (a tight contact shadow plus a soft spread), each
+     using `light-dark()` only for its colour, per the rule above. */
+  --mg-shadow-rest:
+    0 1px 2px light-dark(rgb(15 23 34 / 0.05), rgb(0 0 0 / 0.5)),
+    0 8px 20px -14px light-dark(rgb(15 23 34 / 0.18), rgb(0 0 0 / 0.6));
+
+  /* The shadow the hero casts onto the page below its layered bottom edge. A
+     colour only (light-dark is a <color> function), fed into a box-shadow in
+     Hero.astro alongside the solid offset "sheets" that build the card stack. */
+  --mg-scene-cast: light-dark(rgb(15 23 34 / 0.34), rgb(0 0 0 / 0.72));
+
+  /* One pass, start to finish. Everything in the sky is timed off this: the two
+     craft, the call signs riding with them, and the antenna tracking the leader. */
+  --mg-orbit-period: 42s;
+
+  /* The site header's inner row height. Header.astro pins its row to exactly this
+     so the value is real, not a guess; the hero subtracts it (plus the 1px
+     border-b) from 100svh so the panorama lands flush on the fold. Change it in
+     one place and the header and the fold move together. */
+  --mg-header-h: 3.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Scheme-dependent NUMBERS.
+
+   These cannot use `light-dark()`. That function is defined to return a
+   <color>, and nothing else: given a pair of numbers it is invalid at
+   computed-value time, so `opacity: var(--x)` silently falls back to 1 rather
+   than failing loudly. Both values below were written that way at first, and the
+   figure contact shadows rendered as solid black ellipses in both schemes until
+   it was measured.
+
+   So they are spelled out per scheme instead, in the same three states the
+   toggle uses: default (system), explicit dark, explicit light. It is more lines
+   than the palette above, which is why the palette uses light-dark — but a
+   colour is exactly what that function is for, and these are not colours.
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* The contact shadow under a figure has to be darker than whatever it lands on
+     in BOTH schemes, so it varies by opacity rather than by colour — a token
+     that is near-black at night is near-white by day and the shadow inverts. */
+  --mg-figure-shadow-opacity: 0.16;
+
+  /* Snow needs a scheme-aware weight as well as a colour. On dark the rock is
+     near-black, so a pale cap is loud and has to be held right back; on light
+     the rock is already a pale blue-grey, and the same restraint made the caps
+     vanish into it entirely. One opacity cannot serve both. */
+  --mg-snow-opacity: 0.92;
+
+  /* WHICH SKY IS UP. The night sky — stars, the galaxy, the moon — and the day
+     sky — the sun — are both in the markup, and the scheme picks one. There is
+     no colour that turns a moon into a sun, so this is the one thing the palette
+     genuinely cannot express and it belongs down here with the other numbers.
+
+     Stars in a bright blue sky were the single least believable thing in the
+     hero, and no opacity fixed it: the problem is not that they were too loud,
+     it is that you cannot see stars at noon. Day gets the sun instead. */
+  --mg-sky-night: none;
+  --mg-sky-day: block;
+
+  /* How much of a `.mg-entry--logo-bg` watermark shows through its overlay.
+     The same fraction of a light logo reads very differently against a near-
+     black surface than against a near-white one: at the level that was
+     already right for dark mode, the tint was too close to white to see at
+     all in light mode. Light gets a stronger dose to land at the same
+     visible weight. */
+  --mg-entry-logo-strength: 0.22;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --mg-figure-shadow-opacity: 0.32;
+    --mg-snow-opacity: 0.62;
+    --mg-sky-night: block;
+    --mg-sky-day: none;
+    --mg-entry-logo-strength: 0.09;
+  }
+}
+
+:root[data-theme="dark"] {
+  --mg-figure-shadow-opacity: 0.32;
+  --mg-snow-opacity: 0.62;
+  --mg-sky-night: block;
+  --mg-sky-day: none;
+  --mg-entry-logo-strength: 0.09;
+}
+
+:root[data-theme="light"] {
+  --mg-figure-shadow-opacity: 0.16;
+  --mg-snow-opacity: 0.92;
+  --mg-sky-night: none;
+  --mg-sky-day: block;
+  --mg-entry-logo-strength: 0.22;
+}
+
+/* The toggle narrows `color-scheme` rather than restating the palette. */
+:root[data-theme="light"] {
+  color-scheme: only light;
+}
+:root[data-theme="dark"] {
+  color-scheme: only dark;
+}
+
+/* --------------------------------------------------------------------------
+   Tailwind theme — the palette above, lifted into utility namespaces.
+   -------------------------------------------------------------------------- */
+
+@theme {
+  /* Type ------------------------------------------------------------------
+     One superfamily drawn for technical and data work. The condensed axis on
+     the display face is the instrument-panel voice; the mono carries readouts.
+     Deliberately not Inter — this needs an engineered register, not a neutral one. */
+  --font-display:
+    "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* Colour ---------------------------------------------------------------- */
+  --color-bg: var(--mg-bg);
+  --color-bg-raised: var(--mg-bg-raised);
+  --color-surface: var(--mg-surface);
+  --color-surface-hover: var(--mg-surface-hover);
+  --color-edge: var(--mg-border);
+  --color-edge-strong: var(--mg-border-strong);
+
+  --color-ink: var(--mg-ink);
+  --color-ink-muted: var(--mg-ink-muted);
+  --color-ink-faint: var(--mg-ink-faint);
+
+  --color-accent: var(--mg-accent);
+  --color-accent-text: var(--mg-accent-text);
+  --color-accent-soft: var(--mg-accent-soft);
+  --color-accent-line: var(--mg-accent-line);
+
+  --color-signal: var(--mg-signal);
+  --color-signal-soft: var(--mg-signal-soft);
+
+  /* Ink on an amber fill is always dark — the accent is light in both schemes. */
+  --color-on-accent: #14100a;
+
+  /* Readout label: the detail that carries the instrument feel ------------- */
+  --text-label: 0.6875rem;
+  --text-label--letter-spacing: 0.14em;
+
+  /* Shape ----------------------------------------------------------------- */
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Motion ---------------------------------------------------------------- */
+  --ease-mg: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --animate-blink: mg-blink 3.5s var(--ease-mg) infinite;
+
+  /* Layout ----------------------------------------------------------------- */
+  --container-measure: 68ch;
+  --container-page: 61rem;
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* No scrollbar track, anywhere — that strip of OS-adjacent chrome is what
+     competed with the rest of the page. But a page with no visible thumb at
+     all reads as un-scrollable at a glance, so the thumb stays: a short,
+     fully-rounded pill floating with no track under it, closer to a trackpad
+     overlay indicator than a Windows/Chrome scrollbar. The header's own
+     border-b carries the precise position readout (see Header.astro); this
+     is just "yes, more page below." Scrolling itself is untouched — wheel,
+     trackpad, touch, and keyboard (Space, Page Down, arrow keys, Home/End)
+     all still work, and dragging the thumb still works too. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-edge-strong) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    /* Chrome paints this gutter itself, separately from the track pseudo
+       below — without this it's an opaque strip regardless of the track's
+       own (transparent) background. */
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-track-piece {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-edge-strong);
+    border-radius: 999px;
+    /* Inset the pill off the very edge of the viewport, matching the "float,
+       don't fill" look scrollbar-width: thin can't express on its own. */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-faint);
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-button {
+    display: none;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
+  }
+}
+
+@keyframes mg-blink {
+  0%,
+  88%,
+  100% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 0.25;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Prose — rendered Markdown, which cannot carry utility classes.
+
+   This is the one place a bare element selector is the right tool: the HTML
+   comes out of the Markdown compiler, so there is nothing to put a class on.
+   -------------------------------------------------------------------------- */
+
+@layer components {
+  .prose-mg {
+    --tw-prose-body: var(--color-ink-muted);
+    --tw-prose-headings: var(--color-ink);
+    --tw-prose-bold: var(--color-ink);
+    --tw-prose-links: var(--color-accent-text);
+    --tw-prose-counters: var(--color-ink-faint);
+    --tw-prose-bullets: var(--color-edge-strong);
+    --tw-prose-hr: var(--color-edge);
+    --tw-prose-quotes: var(--color-ink);
+    --tw-prose-quote-borders: var(--color-accent-line);
+    --tw-prose-captions: var(--color-ink-faint);
+    --tw-prose-code: var(--color-accent-text);
+    --tw-prose-th-borders: var(--color-edge);
+    --tw-prose-td-borders: var(--color-edge);
+
+    font-size: 0.95rem;
+    line-height: 1.72;
+    max-width: none;
+  }
+
+  .prose-mg :is(h1, h2, h3, h4) {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    font-weight: 600;
+  }
+
+  .prose-mg h1 {
+    font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+    margin-bottom: 0.75rem;
+  }
+
+  .prose-mg h2 {
+    font-size: clamp(1.4rem, 1.2rem + 1vw, 1.85rem);
+    margin-top: 3.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-edge);
+  }
+
+  /* The first h2 after a project header block follows a rule already. */
+  .prose-mg .mg-project-header + h2 {
+    border-top: 0;
+    padding-top: 0;
+    margin-top: 2rem;
+  }
+
+  .prose-mg h3 {
+    font-size: 1.15rem;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Prose is held to a measure; full-bleed components opt out below. */
+  .prose-mg > :is(p, ul, ol, blockquote) {
+    max-width: var(--container-measure);
+  }
+
+  /* A plain markdown list, as opposed to `.mg-pills` (excluded here so its own
+     `list-none` reset isn't outranked by this rule's higher specificity) —
+     `.prose-mg` never applied the typography plugin's own element styles, only
+     the ones written out below, and lists were the one element type missing
+     from that set. */
+  .prose-mg :is(ul, ol):not(.mg-pills) {
+    margin: 0.75em 0;
+    padding-left: 1.35em;
+  }
+
+  .prose-mg ul:not(.mg-pills) {
+    list-style: disc;
+  }
+
+  .prose-mg ol:not(.mg-pills) {
+    list-style: decimal;
+  }
+
+  .prose-mg li:not(.mg-pills li) {
+    margin: 0.35em 0;
+  }
+
+  .prose-mg a {
+    text-decoration-color: var(--color-accent-line);
+    text-underline-offset: 0.18em;
+    transition: color 140ms var(--ease-mg);
+  }
+
+  .prose-mg a:hover {
+    color: var(--color-accent);
+  }
+
+  .prose-mg :is(img, video) {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-edge);
+    max-width: 100%;
+    height: auto;
+  }
+
+  .prose-mg figure img {
+    box-shadow: var(--mg-shadow);
+  }
+
+  .prose-mg figcaption {
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: 0.04em;
+    color: var(--color-ink-faint);
+  }
+
+  .prose-mg :not(pre) > code {
+    background: var(--color-accent-soft);
+    border-radius: var(--radius-sm);
+    padding: 0.12em 0.38em;
+    font-weight: 400;
+  }
+
+  .prose-mg :not(pre) > code::before,
+  .prose-mg :not(pre) > code::after {
+    content: "";
+  }
+
+  .prose-mg pre {
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-md);
+    font-size: 0.82em;
+  }
+
+  .prose-mg table {
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    font-size: 0.85rem;
+  }
+
+  .prose-mg thead th {
+    background: var(--color-surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+
+  /* Components dropped into Markdown are full-bleed by design. */
+  .prose-mg
+    :is(
+      .mg-stats,
+      .mg-card-grid,
+      .mg-skills,
+      .mg-now,
+      .mg-timeline,
+      .mg-feature,
+      .mg-project-header,
+      .mg-btn-row,
+      .mg-pills,
+      .mg-eyebrow,
+      .mg-todo
+    ) {
+    max-width: none;
+  }
+}

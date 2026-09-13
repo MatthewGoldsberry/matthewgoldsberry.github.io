@@ -1,0 +1,64 @@
+# Hover cards for the figures in the hero.
+#
+# The top-level key IS the routing key: it becomes the entry's id, and it must
+# match `data-spot` on the SVG group. It is checked against the same closed set
+# the components use (see `spotKey` in src/content.config.ts), so a typo here
+# fails the build rather than producing a figure whose card silently never opens.
+#
+# Drop a photo at the `image` path and the card picks it up on its own; until
+# then the card renders as text and no broken image shows.
+
+leopardsat:
+  title: LEOPARDSat-1
+  image: /assets/media/LEOPARDSat-1.jpg
+  href: /projects/leopardsat-1/
+  text: >-
+    Ohio's first student-led satellite, docked at the ISS and waiting on
+    deployment. I wrote the embedded C that talks to its sensors, and the
+    hardware tests that proved the drivers before it flew.
+
+habsat:
+  title: HABSat-1
+  image: /assets/media/habsat-1-mission-patch.png
+  href: /projects/habsat-1/
+  text: >-
+    The next CubeCats mission. I lead the On-Board Computer team — the
+    architecture and the flight software that decide what the spacecraft does
+    once it is out of reach.
+
+cubesats:
+  title: The ground station
+  image: /assets/media/gs_shed.jpeg
+  href: /projects/ground-station/
+  text: >-
+    The other half of the link. During a pass the station has minutes to find
+    the craft, hold the aim, and pull the data down. I work on the telemetry
+    ingestion, the window prediction, and the database it lands in.
+
+# The four below are the personal ones. They are written plainly rather than
+# left blank, but the voice is not yours yet — say these the way you would say
+# them out loud, and they will land better than anything written for you.
+
+climbing:
+  title: Climbing
+  text: >-
+    UC Climbing Club since 2025. The appeal is the same as debugging: the wall
+    does not care how you feel about the move, and the only way past it is to
+    read it properly.
+
+fishing:
+  title: Fly fishing
+  text: >-
+    Long stretches of standing in cold water thinking about drift. It is the one
+    hobby that rewards doing nothing quickly.
+
+golf:
+  title: Golf
+  text: >-
+    Played often, scored honestly. Ask me about the round, not the handicap.
+
+hiking:
+  title: Hiking
+  text: >-
+    Eagle Scout, and still happiest a few miles from the trailhead with the day
+    ahead of me.
