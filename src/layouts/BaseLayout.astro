@@ -43,9 +43,14 @@ const ogImage = new URL(image, Astro.site ?? site.url);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     {/* One file for every surface: a 512px PNG is large enough for an iOS
-        home-screen icon and every browser scales it down for a tab. */}
-    <link rel="icon" href="/favicon.png" type="image/png" sizes="512x512" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
+        home-screen icon and every browser scales it down for a tab.
+
+        The query string is a cache key, not a parameter. Browsers remember a
+        site's favicon by its URL, long after the page itself is re-fetched —
+        a stale "no icon" recorded while the domain was briefly 404ing never
+        cleared on its own. Bump it whenever favicon.png changes. */}
+    <link rel="icon" href="/favicon.png?v=2" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/favicon.png?v=2" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <title>{pageTitle}</title>
