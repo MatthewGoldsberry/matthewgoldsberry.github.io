@@ -171,13 +171,19 @@ const NARROW_LEDGES = [
             outside hand and flagged foot cross the lip into open air. Rope and
             draws live inside the spot so they dim with the figure; the hit box
             stays down in the climber's own transform, which keeps the target on
-            the body rather than spread over the length of the rope. */}
+            the body rather than spread over the length of the rope.
+
+            The box runs about 5 units past the figure on every side. Drawn to
+            the body (24 x 32) it ended exactly where the hands and the flagged
+            foot did, so reaching for a limb, or coming at the climber from the
+            side, kept missing. Nothing else hoverable is near the climber, so
+            the margin cannot steal from another figure. */}
         <Spot spot="climbing">
           <path class="mg-lead" d={WIDE_ROPE} />
           <Draw x={13} y={-90} scale={2.4} />
           <Draw x={7} y={-26} scale={2.4} />
           <Place x={21} y={-95} scale={2.4}>
-            <Hit x={-12} y={-30} width={24} height={32} />
+            <Hit x={-17} y={-35} width={34} height={42} />
             <Climber />
           </Place>
         </Spot>
@@ -206,7 +212,7 @@ const NARROW_LEDGES = [
           <Draw x={13} y={-96} scale={2.05} />
           <Draw x={7} y={-42} scale={2.05} />
           <Place x={20} y={-104} scale={2.05}>
-            <Hit x={-12} y={-30} width={24} height={32} />
+            <Hit x={-17} y={-35} width={34} height={42} />
             <Climber />
           </Place>
         </Spot>

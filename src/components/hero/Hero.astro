@@ -112,8 +112,15 @@ const spots = (await getCollection("spots")).map((entry) => ({
 
   {/* The one island on the site. `client:idle` rather than `client:load`: the
       cards are a hover affordance, so there is nothing to miss by waiting for
-      the main thread to go quiet, and it keeps hydration off the critical path. */}
-  <SpotCards spots={spots} client:idle />
+      the main thread to go quiet, and it keeps hydration off the critical path.
+
+      The timeout is not optional. Without one, `client:idle` waits on
+      `requestIdleCallback` for as long as it takes, and this scene never quite
+      goes idle: the twinkle, the pass and the filter-driven pulse keep the
+      main thread painting. On a busier machine or a high-DPI screen the island
+      could go on waiting indefinitely, and the scene rendered with no hover at
+      all. A second is still well clear of first paint. */}
+  <SpotCards spots={spots} client:idle={{ timeout: 1000 }} />
 </section>
 
 <style>
