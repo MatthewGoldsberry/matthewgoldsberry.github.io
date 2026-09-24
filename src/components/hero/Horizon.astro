@@ -565,9 +565,15 @@ const NARROW_TREES: readonly TreeSpec[] = [
 
   /* 480 x 250: the narrow composition is authored nearly as shallow as the wide
      one, so its own aspect is usually the binding term and the crop stays small. */
+  /* Below the breakpoint the page scrolls rather than fitting one screen (see
+     BaseLayout's `fitViewport`), so there is no leftover height to grow into:
+     the band takes its full aspect height outright. The flex-grow above would
+     otherwise leave it at its floor, and the scene would shrink to a strip. */
   @media screen and (max-width: 47.99em) {
     .mg-hero__horizon {
-      min-height: min(52.1vw, 16svh);
+      flex: 0 0 auto;
+      height: 52.1vw;
+      min-height: 0;
       max-height: 52.1vw;
     }
 

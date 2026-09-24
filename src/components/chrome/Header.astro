@@ -42,25 +42,23 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
 <header
   class="sticky top-0 z-40 border-b border-edge-strong bg-[color-mix(in_srgb,var(--color-chrome)_92%,transparent)] shadow-[0_8px_20px_-12px_var(--mg-chrome-shadow)] backdrop-blur-md"
 >
-  <div
-    class="mx-auto flex h-[var(--mg-header-h)] w-full max-w-[90rem] items-stretch justify-between gap-4 px-4 sm:px-6"
-  >
+  <div class="mg-header__bar mx-auto w-full max-w-[90rem] px-4 sm:px-6">
     <a
       href="/"
-      class="flex items-center font-display text-[1.15rem] font-semibold tracking-[-0.01em] text-ink no-underline hover:text-accent-text"
+      class="mg-header__name flex items-center font-display text-[1.15rem] font-semibold tracking-[-0.01em] whitespace-nowrap text-ink no-underline hover:text-accent-text"
     >
       {site.name}
     </a>
 
-    <nav aria-label="Sections" class="flex items-stretch">
+    <nav aria-label="Sections" class="mg-header__nav flex items-stretch">
       {
         nav.map((item) => (
           <a
             href={item.href}
             aria-current={isCurrent(item.href) ? "page" : undefined}
             class:list={[
-              "relative flex items-center px-3 font-mono text-[0.7rem] tracking-[0.08em] uppercase no-underline transition-colors duration-150 ease-mg",
-              "after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:content-['']",
+              "relative flex items-center px-2 font-mono text-[0.7rem] tracking-[0.04em] uppercase no-underline transition-colors duration-150 ease-mg md:px-3 md:tracking-[0.08em]",
+              "after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:content-[''] md:after:inset-x-3",
               isCurrent(item.href)
                 ? "text-accent-text after:bg-accent"
                 : "text-ink-faint after:bg-transparent hover:text-ink hover:after:bg-edge-strong",
@@ -70,18 +68,78 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
           </a>
         ))
       }
-
-      <span class="mx-2 my-2.5 w-px bg-edge" aria-hidden="true" />
-
-      <div class="flex items-center">
-        <ThemeToggle />
-      </div>
     </nav>
+
+    <span class="mg-header__rule mx-2 my-2.5 w-px bg-edge" aria-hidden="true"></span>
+
+    <div class="mg-header__toggle flex items-center">
+      <ThemeToggle />
+    </div>
   </div>
 
   <div id="scroll-progress" class="absolute inset-x-0 bottom-0 h-[2px] w-0 bg-accent" aria-hidden="true">
   </div>
 </header>
+
+<style>
+  /* One row from the scene's 48em breakpoint up: name, sections, rule, toggle.
+     A grid rather than a flex row so the same four elements can be re-flowed
+     into two rows on a phone without duplicating the toggle in the markup. */
+  .mg-header__bar {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    grid-template-areas: "name nav rule toggle";
+    align-items: stretch;
+    height: var(--mg-header-h);
+  }
+
+  .mg-header__name {
+    grid-area: name;
+  }
+
+  .mg-header__nav {
+    grid-area: nav;
+  }
+
+  .mg-header__rule {
+    grid-area: rule;
+  }
+
+  .mg-header__toggle {
+    grid-area: toggle;
+  }
+
+  /* Two rows on a phone. The single row needed about 560px (the name, four
+     sections and the toggle), so on a 390px screen the name wrapped and the
+     last section and the toggle ran off the right edge. Here the name keeps
+     the toggle beside it and the sections get a row of their own, spread
+     across the full width so each one is an easy tap target. The rule is
+     dropped: the sections are no longer beside the toggle, so there is
+     nothing for it to divide. */
+  @media screen and (max-width: 47.99em) {
+    .mg-header__bar {
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "name toggle"
+        "nav nav";
+      height: auto;
+    }
+
+    .mg-header__name {
+      height: 3rem;
+    }
+
+    .mg-header__nav {
+      height: 2.5rem;
+      justify-content: space-between;
+      border-top: 1px solid var(--color-edge);
+    }
+
+    .mg-header__rule {
+      display: none;
+    }
+  }
+</style>
 
 <script>
   const bar = document.getElementById("scroll-progress");

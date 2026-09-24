@@ -48,7 +48,9 @@ const WIDE_ANCHOR_Y = WIDE_VB_H - 2;
    VB_H >= 480 * H / W. 1200 covers a 390x900 phone (0.813 against 0.750). */
 const NARROW_VB_W = 480;
 const NARROW_VB_H = 1200;
-const NARROW_ANCHOR_X = 470;
+/* 450, not the 470 it was: at 470 the climber, who hangs out past the arete,
+   was cut off by the right edge of a phone screen. */
+const NARROW_ANCHOR_X = 450;
 const NARROW_ANCHOR_Y = NARROW_VB_H - 2;
 
 /* How far back the rock MASS has to run so it always fills to the right edge.
@@ -236,8 +238,24 @@ const NARROW_LEDGES = [
     display: none;
   }
 
-  /* Switched at the same breakpoint the panorama and the orbit band use. */
+  /* Switched at the same breakpoint the panorama and the orbit band use.
+
+     On a phone the layer is also cut down from the whole hero to an outcrop
+     over the panorama. There the hero scrolls and runs a screen and a half
+     tall, and a wall the full height of it ran behind the right third of the
+     name and the lede. The climber is about 140 units up the wall, well inside
+     this. The top of the rock fades into the sky rather than stopping on a
+     hard horizontal cut.
+
+     Height stays under 250vw (1200 × W/480), so the narrow viewBox is still
+     width-governed and the rock keeps the figures' scale. */
   @media screen and (max-width: 47.99em) {
+    .mg-cliff-layer {
+      top: auto;
+      height: calc(52.1vw + 7rem);
+      mask-image: linear-gradient(to bottom, transparent, #000 45%);
+    }
+
     .mg-cliff-layer__svg--wide {
       display: none;
     }

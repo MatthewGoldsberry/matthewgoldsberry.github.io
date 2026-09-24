@@ -130,6 +130,13 @@
     const cliffCTM = group?.getScreenCTM();
     if (!svg || !group || !cliffCTM) return 1;
 
+    /* The side test below treats the arete as an infinite line, so it has to be
+       told when the rock stops short. On a phone the cliff layer is only an
+       outcrop over the panorama (see CliffFace.astro), far below the band;
+       without this the craft would vanish at an invisible line in open sky. */
+    const layer = svg.parentElement?.getBoundingClientRect();
+    if (layer && layer.top >= band.getBoundingClientRect().bottom) return 1;
+
     /* Two points up the lip, and one back in the rock to fix the sign. */
     const a = at(svg, cliffCTM, LIP_X, 0);
     const b = at(svg, cliffCTM, LIP_X, -100);

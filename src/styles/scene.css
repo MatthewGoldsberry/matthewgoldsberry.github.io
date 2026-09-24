@@ -347,10 +347,17 @@
 .mg-sun__halo { fill: url(#mg-halo-sun); }
 .mg-halo-sun stop { stop-color: var(--mg-sun); }
 
+/* Measured from the hero's floor rather than as a share of its height: on a
+   phone the hero scrolls and its height follows the copy, so a percentage
+   drifted up into the lede. 37.5vw up is y 70 in the narrow panorama's 250
+   units (it is 52.1vw tall), in the dip between the summits at x 100 and 286,
+   so the disc sits in open sky just clear of the ridge. */
 @media screen and (max-width: 47.99em) {
   .mg-celestial {
-    left: 74%;
-    top: 79%;
+    left: 42%;
+    top: auto;
+    bottom: 37.5vw;
+    transform: translate(-50%, 50%);
     width: clamp(44px, 12vw, 70px);
   }
 }
