@@ -1,0 +1,120 @@
+---
+/**
+ * The document shell: head, header, footer, and the one blocking script.
+ *
+ * Everything on the site renders through here. It ships no JavaScript of its own
+ * beyond the theme bootstrap below and the toggle's own handler — the page is
+ * static HTML, and only components marked `client:*` hydrate.
+ */
+import { site } from "../data/site";
+import Header from "../components/chrome/Header.astro";
+import Footer from "../components/chrome/Footer.astro";
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Full-bleed pages (the landing page) opt out of the content container. */
+  bare?: boolean;
+  /** The landing page only: header, slot and footer share exactly one viewport
+   *  height between them and the page never scrolls. */
+  fitViewport?: boolean;
+  /** Social preview image, relative to /public. */
+  image?: string;
+}
+
+const {
+  title,
+  description = site.description,
+  bare = false,
+  fitViewport = false,
+  image = "/assets/media/profile.jpg",
+} = Astro.props;
+
+// The site name stands alone on the landing page and suffixes everywhere else.
+const pageTitle = title ? `${title} · ${site.name}` : site.name;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url);
+const ogImage = new URL(image, Astro.site ?? site.url);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* One file for every surface: a 512px PNG is large enough for an iOS
+        home-screen icon and every browser scales it down for a tab. */}
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={site.name} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {/* One superfamily, three cuts. Preconnect first so the stylesheet request
+        does not pay for the handshake. */}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    />
+
+    {/* Blocking on purpose, and the only blocking script on the site. It has to
+        set the attribute before first paint or a reader who chose light gets a
+        frame of dark first. Kept to one statement for that reason. */}
+    <script is:inline>
+      try {
+        const saved = localStorage.getItem("theme");
+        if (saved === "light" || saved === "dark") {
+          document.documentElement.dataset.theme = saved;
+        }
+      } catch {
+        /* Private mode, or storage disabled. The palette falls back to the
+           system preference on its own, which is the correct default anyway. */
+      }
+    </script>
+  </head>
+
+  <body
+    class:list={[
+      "bg-bg text-ink antialiased",
+      /* Header, main and footer as one flex column pinned to exactly one
+         screen, rather than the usual `min-h-svh` that lets the document grow
+         past it — that's what makes the page unscrollable. */
+      fitViewport ? "flex h-svh flex-col overflow-hidden" : "min-h-svh",
+    ]}
+  >
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:border focus:border-accent focus:bg-bg-raised focus:px-4 focus:py-2 focus:font-mono focus:text-label focus:uppercase"
+    >
+      Skip to content
+    </a>
+
+    <Header />
+
+    <main id="main" class:list={{ "min-h-0 flex-1": fitViewport }}>
+      {
+        bare ? (
+          <slot />
+        ) : (
+          <div class="mx-auto w-full max-w-page px-5 py-14">
+            <slot />
+          </div>
+        )
+      }
+    </main>
+
+    <Footer compact={fitViewport} />
+  </body>
+</html>

@@ -1,0 +1,23 @@
+---
+/** A boulder on the near ground, generated from a centre, a half-width, and a height. */
+import { r1 } from "./types";
+
+interface Props {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+const { x, y, width: w, height: h } = Astro.props;
+
+const d = `M ${x - w} ${y}
+  C ${r1(x - w * 0.85)} ${r1(y - h * 1.05)},
+    ${r1(x - w * 0.25)} ${r1(y - h * 1.35)},
+    ${r1(x + w * 0.15)} ${r1(y - h * 1.05)}
+  C ${r1(x + w * 0.6)} ${r1(y - h * 0.85)},
+    ${r1(x + w * 0.9)} ${r1(y - h * 0.3)},
+    ${x + w} ${y} Z`;
+---
+
+<path class="mg-rock" d={d} />

@@ -1,0 +1,161 @@
+---
+/**
+ * Crew plate — the portrait, and where he is based.
+ *
+ * Just the photo and one line under it. The plate used to carry a second
+ * "Status" row, and two labelled rows needed a 200px-wide column of their own;
+ * on most laptop windows that pushed the plate onto its side (photo left,
+ * rows right) at 22rem wide, which took that width off the name and the lede.
+ * With a single caption the plate stacks at every size, and is only as wide as
+ * the picture, so the copy beside it gets the room back.
+ *
+ * The portrait is sized against the window's HEIGHT, not its width: the hero
+ * shares one screen with the panorama, and the plate sits beside a text block
+ * whose height is fixed by its content. Held to roughly that height, the photo
+ * reads as part of the same row rather than as a thumbnail pinned next to it.
+ * The source is 512px square, so even the largest size here is well inside it.
+ */
+import { hero } from "../../data/site";
+---
+
+<aside class="mg-plate">
+  <img
+    class="mg-plate__photo"
+    src={hero.photo}
+    alt={hero.photoAlt}
+    width="512"
+    height="512"
+    decoding="async"
+    fetchpriority="high"
+  />
+
+  <p class="mg-plate__location">
+    <svg
+      class="mg-plate__pin"
+      viewBox="0 0 24 24"
+      width="13"
+      height="13"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
+      <circle cx="12" cy="9.5" r="2.5" />
+    </svg>
+    {hero.location}
+  </p>
+</aside>
+
+<style>
+  .mg-plate {
+    position: relative;
+    /* One number drives the whole plate. 28svh tracks the hero's height budget
+       (see the note above); the floor keeps it a portrait rather than an icon
+       on a very short window, and the ceiling stops it outgrowing the text
+       block on a tall one. */
+    --portrait: clamp(8.5rem, 28svh, 14rem);
+    /* Sized by the photo: fit-content keeps the plate exactly as wide as the
+       image plus its padding, whatever the root font is doing. */
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.7rem;
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--mg-shadow);
+    justify-self: start;
+  }
+
+  /* Two crop marks, not four. A facing pair reads as a frame on its own, and a
+     full set would be a second box drawn around a card that has a border. */
+  .mg-plate::before,
+  .mg-plate::after {
+    content: "";
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    border: 1px solid var(--color-accent-line);
+  }
+
+  .mg-plate::before {
+    top: -6px;
+    left: -6px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .mg-plate::after {
+    right: -6px;
+    bottom: -6px;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  /* object-fit: cover on a fixed square — the source is already a square crop, so
+     this only guards against a future non-square file.
+
+     The photo is a cutout, so its background is painted here rather than
+     baked into the file: one image, one backdrop per scheme. The glow sits
+     behind the head, which is what keeps dark hair off a dark field. */
+  .mg-plate__photo {
+    display: block;
+    width: var(--portrait);
+    height: var(--portrait);
+    max-width: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+    background: radial-gradient(
+      circle at 50% 38%,
+      var(--mg-portrait-glow),
+      var(--mg-portrait-field) 75%
+    );
+  }
+
+  /* Held to the photo's width, so the caption can never widen the plate past
+     the picture. It is one readout, so it never wraps either: the tracking
+     and zero side padding are what let "CINCINNATI, OH" fit the smallest
+     phone portrait (7.5rem) on a single line. */
+  .mg-plate__location {
+    box-sizing: border-box;
+    width: var(--portrait);
+    max-width: 100%;
+    margin: 0;
+    padding: 0.6rem 0 0.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-ink-muted);
+  }
+
+  .mg-plate__pin {
+    flex: 0 0 auto;
+    color: var(--color-accent);
+  }
+
+  /* Stacked above the copy on a narrow screen (see Hero.astro), where every
+     pixel of portrait comes straight out of the fold — so it steps down, and
+     sits at the start of the column under the name's left edge. The alignment
+     lives here rather than in Hero.astro: this sheet's scoped `.mg-plate`
+     outranks a `:global(.mg-plate)` there, so an override there never wins. */
+  @media screen and (max-width: 53em) {
+    .mg-plate {
+      --portrait: clamp(8rem, 24svh, 11rem);
+      justify-self: start;
+    }
+  }
+
+  @media screen and (max-width: 44.9em) {
+    .mg-plate {
+      --portrait: clamp(7.5rem, 17svh, 8.5rem);
+    }
+  }
+</style>

@@ -1,0 +1,106 @@
+---
+/**
+ * A project, as a compact feature: an image beside the full write-up copy.
+ *
+ * The image fills the card's own height — it's flush with the card's edges
+ * and stretches (`items-stretch`) to match whatever height the text ends up
+ * needing, rather than sitting as a separately bordered, fixed-size box
+ * floating inside the card's padding. The card's `overflow-hidden` clips it
+ * to the shared rounded corner on that side; the text keeps its own padding
+ * so it isn't flush too.
+ *
+ * `object-cover` fills that space, which works when the image's own aspect
+ * ratio is close to the box's roughly-square one — a mission patch, a photo.
+ * A dashboard screenshot is not: those run close to 1.9:1, and this box
+ * rarely does, so covering it crops the screenshot's sides off rather than
+ * its top and bottom. Anything that wide sets `imageFit: "contain"` in
+ * frontmatter instead, to show the whole image letterboxed rather than lose
+ * either edge.
+ *
+ * Same stretched-link trick as `ProjectCard`: the title's anchor covers the
+ * row, and the tag/link row that sits on top of it is lifted with `z-index`
+ * so those stay individually clickable.
+ */
+import Pills from "./Pills.astro";
+import StatusBadge from "./StatusBadge.astro";
+
+interface Props {
+  href: string;
+  title: string;
+  description: string;
+  image: string;
+  imageAlt: string;
+  imageFit?: "cover" | "contain";
+  tech?: readonly string[];
+  links?: readonly { label: string; href: string }[];
+  status?: string | undefined;
+  ongoing?: boolean;
+}
+
+const {
+  href,
+  title,
+  description,
+  image,
+  imageAlt,
+  imageFit = "cover",
+  tech = [],
+  links = [],
+  status,
+  ongoing = true,
+} = Astro.props;
+---
+
+<article
+  class="group relative flex items-stretch gap-4 overflow-hidden rounded-2xl border border-edge-strong bg-surface shadow-[var(--mg-shadow-rest)] transition-[transform,border-color,box-shadow] duration-200 ease-mg hover:border-accent-line hover:shadow-[var(--mg-shadow)] motion-safe:hover:-translate-y-px"
+>
+  <span class="block w-44 shrink-0 overflow-hidden bg-bg-raised sm:w-56">
+    <img
+      src={image}
+      alt={imageAlt}
+      loading="lazy"
+      decoding="async"
+      class:list={[
+        "block h-full w-full transition-transform duration-400 ease-mg motion-safe:group-hover:scale-[1.03]",
+        imageFit === "contain" ? "object-contain p-3" : "object-cover object-center",
+      ]}
+    />
+  </span>
+
+  <div class="flex min-w-0 flex-1 flex-col justify-center gap-2 py-4 pr-4">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <h3 class="m-0 min-w-0 font-display text-[1.05rem] leading-tight font-semibold tracking-[-0.015em] text-ink">
+        {/* The stretched link. `after:absolute after:inset-0` is what makes the
+            whole row clickable without nesting interactive elements. */}
+        <a
+          href={href}
+          class="text-inherit no-underline after:absolute after:inset-0 after:z-[1] after:content-[''] group-hover:text-accent-text"
+        >
+          {title}
+        </a>
+      </h3>
+      {status && <StatusBadge status={status} ongoing={ongoing} class="shrink-0" />}
+    </div>
+
+    <p class="m-0 text-[0.82rem] leading-relaxed text-ink-muted">{description}</p>
+
+    {tech.length > 0 && <Pills items={tech} class="relative z-[2]" />}
+
+    {
+      links.length > 0 && (
+        <p class="relative z-[2] m-0 flex flex-wrap gap-4 pt-1 font-mono text-label tracking-[0.06em] uppercase">
+          {links.map((link) => (
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-accent-text underline decoration-accent-line underline-offset-[0.18em] hover:text-accent"
+            >
+              {link.label}
+            </a>
+          ))}
+        </p>
+      )
+    }
+  </div>
+</article>

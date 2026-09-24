@@ -1,0 +1,42 @@
+---
+/**
+ * A project's status badge — shared by `ProjectCard` and `ProjectRow` so the
+ * two never drift.
+ *
+ * Live work gets the amber instrument dot; finished work gets a quieter,
+ * static one in the ink-faint tone. That's a real distinction — a satellite
+ * "In orbit" or a demo that is genuinely live right now is still moving, but
+ * "Complete" is not, and a blinking light on it would claim otherwise.
+ */
+interface Props {
+  status: string;
+  ongoing?: boolean;
+  class?: string;
+}
+
+const { status, ongoing = true, class: className = "" } = Astro.props;
+---
+
+{
+  ongoing ? (
+    <p
+      class:list={[
+        "m-0 inline-flex w-fit items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-0.5 font-mono text-label tracking-[0.08em] text-accent-text uppercase",
+        className,
+      ]}
+    >
+      <span class="size-1.5 shrink-0 rounded-full bg-accent motion-safe:animate-blink" />
+      {status}
+    </p>
+  ) : (
+    <p
+      class:list={[
+        "m-0 inline-flex w-fit items-center gap-1.5 rounded-full bg-bg-raised px-2.5 py-0.5 font-mono text-label tracking-[0.08em] text-ink-faint uppercase",
+        className,
+      ]}
+    >
+      <span class="size-1.5 shrink-0 rounded-full bg-ink-faint" />
+      {status}
+    </p>
+  )
+}

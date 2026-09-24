@@ -1,0 +1,582 @@
+---
+/**
+ * Hero horizon — the panorama that closes the hero.
+ *
+ * DEPTH. The band reads in six planes, back to front:
+ *
+ *   1  far range      jagged, snow-capped, the softest and highest
+ *   2  second range   a nearer jagged ridge, no snow
+ *   3  foothills      ROLLING, not jagged — the shape change is the depth cue
+ *   4  mid ground     lower rolling hills carrying the main tree line
+ *   5  near ground    the plane the figures stand on
+ *   6  near bank      the strip at the very bottom, closest of all
+ *
+ * The foothills are deliberately curves where the two ranges behind them are
+ * angles. Silhouette detail collapses with distance in a real landscape, so
+ * running rolling ground in front of jagged rock does more for the recession
+ * than a third jagged ridge would have.
+ *
+ * Valley haze sits between planes 1-2 and 2-3, and the planes lose contrast
+ * toward the sky in order. Those are the other two halves of the same cue: with
+ * nothing in the gaps, extra ridges just stack as flat cut-outs.
+ *
+ * THE RIVER RECEDES. It is a channel, not a band: wide in the foreground, wound
+ * through a bend, then flattening toward the horizontal as it narrows away and
+ * dissolves into the foot of the hills — a receding line loses its slope as it
+ * nears the horizon, so the far stations step back in x far faster than in y.
+ * Both banks are generated from one centreline (see `channel` in figures/types),
+ * which keeps it symmetrical about its own course while it tapers. It is drawn
+ * AFTER the ground planes, so it reads as a valley cut through them rather than
+ * a ribbon lying on top, and the water is OPAQUE — the ground does not show
+ * through it; only the far tip fades, by the gradient, into the hills.
+ *
+ * THE ANGLER IS IN IT, thigh-deep. He is clipped at the waterline rather than
+ * covered by the water (the fill is now opaque, so his submerged half would
+ * otherwise just vanish under a flat shape). See Angler.astro.
+ *
+ * THE PATH. A worn track winds from the near bank back to the hiker and on into
+ * the hills, where — like the river — it flattens toward the horizontal and
+ * fades along the foot of the foothills rather than climbing the frame. Drawn in
+ * three overlapping runs of decreasing width and opacity, because a stroke has
+ * one width for its whole length.
+ *
+ * SIZING. Authored wide and short (1200x260) rather than as a tall scene
+ * squeezed into a strip. Cropping is anchored to YMax, so what a short window
+ * takes is always SKY off the top, never a figure.
+ *
+ * ANTENNA TRACKING: the array is aimed at LEOPARDSat-1 on the orbit band at the
+ * top of the hero. That aim is computed from the real geometry at runtime, so
+ * re-laying this band cannot silently break it. See PassGeometry.astro.
+ */
+import Spot from "../figures/Spot.astro";
+import Station from "../figures/Station.astro";
+import Angler from "../figures/Angler.astro";
+import Campsite from "../figures/Campsite.astro";
+import Hiker from "../figures/Hiker.astro";
+import Trees from "../figures/Trees.astro";
+import Tuft from "../figures/Tuft.astro";
+import Rock from "../figures/Rock.astro";
+import Bird from "../figures/Bird.astro";
+import MountainRange from "../figures/MountainRange.astro";
+import { channel, smoothPath, smoothSegments } from "../figures/types";
+import type { TreeSpec, Ridge, Pt } from "../figures/types";
+
+/* The far range. Summits at y 54-62 with every lesser peak at 88 or below, and
+   the snowline drawn through the gap at 84 — see MountainRange for why that
+   separation matters. */
+const WIDE_RIDGE: Ridge = [
+  [0, 132], [40, 114], [78, 128], [112, 98], [148, 120],
+  [186, 58], [222, 106], [262, 90], [300, 124], [340, 102],
+  [378, 120], [416, 96], [452, 128], [492, 54], [530, 100],
+  [568, 88], [606, 122], [646, 104], [684, 118], [722, 96],
+  [760, 126], [798, 62], [836, 108], [874, 92], [912, 120],
+  [950, 100], [988, 126], [1026, 56], [1064, 98], [1102, 90],
+  [1140, 124], [1176, 118], [1200, 132],
+];
+
+/* The second range. Its peaks fall in the COLS of the range behind, so the two
+   skylines interlock rather than one hiding the other. */
+const WIDE_RIDGE_B: Ridge = [
+  [0, 172], [52, 158], [104, 174], [156, 152], [208, 170],
+  [262, 150], [314, 168], [368, 154], [420, 172], [472, 156],
+  [524, 170], [578, 148], [630, 166], [684, 156], [736, 174],
+  [790, 158], [842, 170], [896, 152], [948, 168], [1000, 158],
+  [1052, 172], [1104, 156], [1156, 168], [1200, 164],
+];
+
+/* The river, drawn as its two banks rather than from a centreline.
+
+   It never leaves the valley floor. Rivers do not climb, so all of it lies on
+   the near ground plane: a wide reach coming toward you (the angler is in it),
+   then a bend, then a thin ribbon running SIDEWAYS along the foot of the hills
+   at an almost constant y (~232-235), just under the plane's crest (~230-232
+   there). A flat river seen from low down looks exactly like that — distance
+   flattens it into a sliver, it does not tilt it up the frame. It used to run
+   on up the face of the mid-ground ridge to y 209, which was a river flowing
+   uphill over a crest, and no amount of fading hid it.
+
+   The far end is not drawn thin to a point; it slides under the flank of the
+   rise below (`WIDE_SPUR`), which is how a river actually leaves your sight
+   across rolling ground.
+
+   Banks, not `channel()`: a channel is a cross-section swept straight away
+   from the viewer, and cannot describe a reach that turns and runs across the
+   frame. Left bank runs mouth-to-tip, right bank tip-to-mouth, so the two join
+   into one closed outline. The foreground width is what makes the angler
+   legible in it. */
+/* The left bank's front corner curls back to the RIGHT as it comes toward
+   the viewer — the inside of the bend the water is swinging round toward the
+   campsite — rather than fanning out to the left edge of the frame. */
+const WIDE_RIVER_LEFT: readonly Pt[] = [
+  [262, 262], [252, 258.6], [248, 254.6], [252, 250.4], [262, 246.4],
+  [276, 242.8], [292, 239.6], [310, 237], [332, 235], [360, 233.2],
+  [410, 232.4], [470, 232.4], [540, 233.4],
+];
+/* The right bank's near reach sweeps out toward the campsite, so the water
+   curls around in front of the tent. It runs just under the campsite's
+   clearing (the ellipse under it bottoms out at ~y 253-254 there) — keep it
+   below that if either moves. */
+const WIDE_RIVER_RIGHT: readonly Pt[] = [
+  [556, 234.8], [506, 234.4], [456, 234.6], [426, 236], [416, 237.8],
+  [430, 240], [462, 243.2], [508, 246.2], [564, 248.6], [616, 250.6],
+  [664, 254], [702, 256.4], [728, 259.4], [742, 262],
+];
+const WIDE_RIVER =
+  `M ${WIDE_RIVER_LEFT[0]!.join(" ")} ${smoothSegments(WIDE_RIVER_LEFT)} ` +
+  `L ${WIDE_RIVER_RIGHT[0]!.join(" ")} ${smoothSegments(WIDE_RIVER_RIGHT)} Z`;
+
+/* A low rise of the near ground from the right, the river's far reach
+   sliding under its left flank. Filled with the near plane's own colour, so
+   its foot is invisible on the grass and only its outline against the hills
+   behind, and the water running under it, show where it is. */
+const WIDE_SPUR =
+  "M 488 236.4 C 520 235.6, 560 235.8, 650 237.2 L 650 233.6 " +
+  "C 610 231, 570 229.2, 540 229.4 C 515 229.8, 498 232.4, 488 236.4 Z";
+
+/* The footpath, in three runs — one per ground plane it crosses, the same
+   idea as the river. A path does not float over the landscape; it lies ON it,
+   so each run is drawn in its own plane's slot in the layer order and the
+   plane in front hides whatever of it is beyond that plane's crest. The track
+   comes up the near ground and ends exactly on its crest; drops out of sight
+   over it and reappears on the mid ground, under the hiker's feet; switches
+   back up to the mid ground's crest and goes over; and surfaces again on the
+   face of the foothills, climbing gently across them.
+
+   Each run STARTS below the crest of the plane in front of it (hidden) and
+   ENDS on its own plane's crest — never beyond, or it would be drawn over the
+   next plane back. Crest heights here, for x ~900-1080: near ~234-232,
+   mid ~207-210, foothills ~189-190. Retune the terrain and these need
+   re-reading, the same way the river's banks do. */
+const WIDE_PATH_NEAR: readonly Pt[] = [
+  [1012, 262], [994, 254], [972, 246.5], [952, 240.5], [938, 236.2], [930, 234.4],
+];
+const WIDE_PATH_MID: readonly Pt[] = [
+  [944, 242], [932, 236], [918, 229.5], [903, 224], [895, 218.5], [900, 213.5],
+  [918, 210], [940, 208.2], [952, 207.6],
+];
+const WIDE_PATH_FAR: readonly Pt[] = [
+  [968, 214], [976, 209.5], [986, 205.5], [1004, 202], [1028, 199.4],
+  [1054, 197.6], [1080, 196.6], [1104, 196.2],
+];
+
+/* Three tree lines, each at its own scale. One size of tree across two ridges
+   flattens them back into a single plane, because nothing about the trees says
+   which ridge is further away. */
+const WIDE_TREES_FAR: readonly TreeSpec[] = [
+  [88, 172, 7], [102, 173, 5], [244, 168, 6], [256, 169, 4],
+  [402, 170, 7], [416, 171, 5], [560, 166, 6], [572, 167, 4],
+  [718, 172, 7], [732, 173, 5], [878, 168, 6], [890, 169, 4],
+  [1036, 170, 7], [1048, 171, 5],
+];
+
+const WIDE_TREES_HILL: readonly TreeSpec[] = [
+  [140, 194, 11], [156, 195, 8], [168, 196, 6],
+  [486, 191, 12], [502, 192, 9],
+  [826, 193, 11], [842, 194, 8],
+  [1108, 192, 11], [1124, 193, 8],
+];
+
+const WIDE_TREES: readonly TreeSpec[] = [
+  [58, 214, 17], [78, 213, 13], [96, 214, 9],
+  [286, 211, 15], [304, 212, 11], [318, 213, 8],
+  [452, 214, 12], [468, 215, 9],
+  [700, 215, 15], [718, 216, 11],
+  [1004, 210, 18], [1024, 211, 13], [1040, 212, 9],
+  [1160, 212, 14], [1178, 213, 10],
+];
+
+/* --------------------------------------------------------------------- narrow */
+
+const NARROW_RIDGE: Ridge = [
+  [0, 126], [34, 110], [66, 124], [100, 60], [136, 104],
+  [172, 92], [210, 122], [248, 102], [286, 58], [322, 100],
+  [358, 88], [396, 120], [432, 64], [462, 112], [480, 126],
+];
+
+const NARROW_RIDGE_B: Ridge = [
+  [0, 168], [40, 152], [82, 170], [126, 148], [168, 166],
+  [212, 150], [256, 168], [300, 152], [342, 170], [386, 154],
+  [430, 166], [480, 158],
+];
+
+const NARROW_RIVER = [
+  { y: 252, cx: 156, hw: 88 },
+  { y: 244, cx: 160, hw: 73 },
+  { y: 237, cx: 160, hw: 60 },
+  { y: 231, cx: 156, hw: 48 },
+  { y: 226, cx: 150, hw: 38 },
+  { y: 222, cx: 148, hw: 29 },
+  { y: 219, cx: 152, hw: 22 },
+  { y: 216, cx: 164, hw: 16 },
+  { y: 213.5, cx: 184, hw: 11 },
+  { y: 211.5, cx: 208, hw: 7 },
+  { y: 210, cx: 230, hw: 4 },
+  { y: 209.2, cx: 244, hw: 2 },
+];
+
+const NARROW_PATH_NEAR: readonly Pt[] = [[452, 248], [428, 240], [410, 232], [398, 225], [390, 221]];
+const NARROW_PATH_MID: readonly Pt[] = [[398, 225], [390, 221], [388, 216], [394, 212], [406, 209]];
+const NARROW_PATH_FAR: readonly Pt[] = [
+  [406, 209], [422, 206], [438, 205], [452, 205.5], [462, 207],
+];
+
+const NARROW_TREES_FAR: readonly TreeSpec[] = [
+  [60, 166, 6], [72, 167, 4], [190, 164, 6], [202, 165, 4],
+  [320, 166, 6], [332, 167, 4], [440, 164, 5],
+];
+
+const NARROW_TREES_HILL: readonly TreeSpec[] = [
+  [96, 192, 10], [110, 193, 7], [286, 190, 10], [300, 191, 7],
+];
+
+const NARROW_TREES: readonly TreeSpec[] = [
+  [30, 212, 15], [48, 211, 11], [62, 212, 8],
+  [222, 210, 14], [238, 211, 10],
+  [452, 211, 14], [468, 212, 10],
+];
+---
+
+<div class="mg-hero__horizon" aria-hidden="true">
+  {/* ------------------------------------------------------------------ WIDE */}
+  <svg
+    class="mg-horizon__svg mg-horizon__svg--wide"
+    viewBox="0 0 1200 260"
+    preserveAspectRatio="xMidYMax slice"
+    role="presentation"
+    focusable="false"
+  >
+    <defs>
+      {/* The channel's own fade, running ALONG the course rather than across it,
+          so the far end thins into the ground instead of stopping at a point. */}
+      <linearGradient
+        class="mg-river-fade"
+        id="mg-river-h-fade"
+        gradientUnits="userSpaceOnUse"
+        x1="540" y1="233" x2="380" y2="262"
+      >
+        <stop offset="0" stop-opacity="0.6" />
+        <stop offset="0.3" stop-opacity="1" />
+        <stop offset="1" stop-opacity="1" />
+      </linearGradient>
+
+      {/* The near bank with the river's mouth cut out of it, so the water runs
+          out of the bottom of the frame instead of stopping at a strip of
+          ground drawn across it. */}
+      <mask id="mg-fore-h-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="260">
+        <rect width="1200" height="260" fill="white" />
+        <path d={WIDE_RIVER} fill="black" />
+      </mask>
+
+      {/* Valley haze: clear at the top, pooling toward the ground. */}
+      <linearGradient class="mg-haze" id="mg-haze-h" gradientUnits="userSpaceOnUse"
+                      x1="0" y1="140" x2="0" y2="212">
+        <stop offset="0" stop-opacity="0" />
+        <stop offset="0.55" stop-opacity="0.4" />
+        <stop offset="1" stop-opacity="0.72" />
+      </linearGradient>
+    </defs>
+
+    {/* Sky. The stars are not here: one field spans the whole hero, behind
+        this band and the pass both — see Starfield.astro. */}
+    <Bird x={508} y={78} index={1} />
+    <Bird x={548} y={88} scale={0.8} index={2} />
+
+    {/* 1 — far range */}
+    <MountainRange ridge={WIDE_RIDGE} baseline={260} snowline={84} />
+
+    <path class="mg-mist" d="M 0 150 C 180 142, 380 148, 600 142
+      C 820 136, 1020 146, 1200 140 L 1200 186 L 0 186 Z" />
+
+    {/* 2 — second range. `snowline` sits above every vertex, so it draws no
+        caps: snow on the nearer ridge would put it at the same altitude as the
+        range behind and the recession would collapse. */}
+    <MountainRange ridge={WIDE_RIDGE_B} baseline={260} snowline={120} class="mg-range--b" />
+
+    <Trees trees={WIDE_TREES_FAR} class="mg-tree--far" />
+
+    <path class="mg-mist mg-mist--b" d="M 0 178 C 200 172, 420 178, 640 172
+      C 860 166, 1040 176, 1200 170 L 1200 208 L 0 208 Z" />
+
+    {/* 3 — foothills. Rolling, against the angles behind them. */}
+    <path class="mg-terrain-hill" d="M 0 260 L 0 194
+      C 120 188, 240 198, 360 192 C 480 186, 600 196, 720 190
+      C 840 184, 960 194, 1080 189 C 1140 187, 1170 190, 1200 189 L 1200 260 Z" />
+
+    {/* The track's far run, on the foothills: the mid ground drawn next hides
+        its start, so it surfaces over that crest. */}
+    <path class="mg-path mg-path--far" d={smoothPath(WIDE_PATH_FAR)} />
+
+    <Trees trees={WIDE_TREES_HILL} class="mg-tree--hill" />
+
+    {/* 4 — mid ground, carrying the main tree line */}
+    <path class="mg-terrain-mid" d="M 0 260 L 0 214
+      C 100 208, 220 204, 340 208 C 460 212, 560 216, 680 212
+      C 800 208, 920 205, 1040 209 C 1120 212, 1160 214, 1200 215 L 1200 260 Z" />
+
+    {/* The track's mid run, under the hiker: the near ground drawn next hides
+        its start, so it comes up over that crest. */}
+    <path class="mg-path mg-path--mid" d={smoothPath(WIDE_PATH_MID)} />
+
+    <Trees trees={WIDE_TREES} />
+
+    {/* 5 — near ground: the plane the figures stand on */}
+    <path class="mg-terrain-near" d="M 0 260 L 0 234
+      C 140 230, 300 228, 460 231 C 640 234, 780 237, 940 234
+      C 1060 232, 1140 231, 1200 232 L 1200 260 Z" />
+
+    {/* The track's near run, on this plane — see WIDE_PATH_NEAR. */}
+    <path class="mg-path mg-path--near" d={smoothPath(WIDE_PATH_NEAR)} />
+
+    {/* The river. First the far bank: the channel again, a touch higher, in
+        the bank's earth colour — the water drawn over it leaves a sliver
+        along its upper edges, the bank face you see across the water. That
+        sliver is what puts the water below the grass rather than on it. */}
+    <path class="mg-river-bank" d={WIDE_RIVER} transform="translate(0 -1.6)" />
+    <path class="mg-river" d={WIDE_RIVER} />
+    <path class="mg-river__flow" d="M 330 257 L 368 258 M 440 256 L 406 257
+      M 330 247 L 300 248 M 390 246 L 420 245" />
+    <path class="mg-river__flow mg-river__flow--b" d="M 300 252 L 334 251
+      M 400 252 L 432 251 M 326 243 L 354 242.6 M 362 239.5 L 384 239
+      M 540 254 L 574 254.6 M 612 257.5 L 644 258" />
+
+    {/* The rise the river's far reach slides under. */}
+    <path class="mg-terrain-near" d={WIDE_SPUR} />
+
+    {/* Scrub and stone on the open ground */}
+    <Rock x={640} y={230} width={5} height={2.6} />
+    <Rock x={1076} y={233} width={4.5} height={2.4} />
+    <Tuft x={520} y={230} scale={0.85} />
+    <Tuft x={598} y={228} scale={0.7} />
+    <Tuft x={776} y={231} scale={0.8} />
+    <Tuft x={1128} y={229} scale={0.85} />
+
+    {/* Ground station, foreground left, and the largest figure on the band: the
+        nearest thing in frame and the only one aimed at anything. */}
+    <Spot spot="cubesats" pause x={90} y={252} scale={2.3} hit={[-26, -70, 78, 74]}>
+      <Station />
+    </Spot>
+
+    {/* Angler, knee-deep on the drift. `waterline` is just above the knee on
+        the skeleton (knee at 7.2), which at this scale puts the surface ~12
+        units up, at y ~240. It used to be mid-thigh, ~20 up — y ~230, which is
+        the crest of the near ground, so the water around him had to run all
+        the way to the valley's far edge and the river could never end short
+        of it. Knee-deep, it sits well inside the channel.
+
+        `castEnd` is read off WIDE_RIVER: it is where the fly actually lands
+        inside the water at this angler's position and scale (x ~460, y ~248;
+        the banks are ~255..560 there), checked against the real outline rather than
+        guessed — move the angler, the scale, or the river stations and this
+        needs rechecking too. */}
+    <Spot spot="fishing" x={340} y={252} scale={2.35} hit={[-12, -34, 50, 30]}>
+      <Angler waterline={5} clipId="mg-wade-h" castEnd={[51, -1.7]} />
+    </Spot>
+
+    {/* Campsite, clear of the water on the right bank. Same scale as the
+        angler's bank so the camper is the same-sized person, seated. */}
+    <ellipse class="mg-clearing" cx="706" cy="246" rx="104" ry="8" />
+    <Spot spot="camping" x={740} y={246} scale={2.4} hit={[-47, -24, 66, 25]}>
+      <Campsite />
+    </Spot>
+
+    {/* Hiker, standing on the track. Still the smallest of the foreground
+        figures — the size difference is what puts him back on the mid ground
+        rather than beside the camper. */}
+    <Spot spot="hiking" x={900} y={223} scale={1.62} hit={[-16, -34, 34, 41]}>
+      <Hiker />
+    </Spot>
+
+    {/* 6 — near bank, closest of all, with the river's mouth cut out of it */}
+    <path class="mg-terrain-fore" mask="url(#mg-fore-h-mask)" d="M 0 260 L 0 255
+      C 220 252, 440 257, 660 254 C 880 251, 1050 256, 1200 253 L 1200 260 Z" />
+
+    {/* Grass on the near bank. Clusters of moderate tufts, never one large one:
+        a tuft is a fan of three blades from a point, which reads as grass small
+        and as a chevron once it is big enough to see the shape. Past about 1.3
+        the bank sprouts arrows. Density is the depth cue, not size. */}
+    <Tuft x={30} y={257} scale={1.25} />
+    <Tuft x={44} y={259} scale={1} />
+    <Tuft x={58} y={256} scale={1.15} />
+    <Tuft x={752} y={258} scale={1.2} />
+    <Tuft x={766} y={256} scale={0.95} />
+    <Tuft x={846} y={258} scale={1.25} />
+    <Tuft x={861} y={256} scale={1} />
+    <Tuft x={1136} y={256} scale={1.2} />
+    <Tuft x={1151} y={258} scale={0.95} />
+  </svg>
+
+  {/* ---------------------------------------------------------------- NARROW */}
+  <svg
+    class="mg-horizon__svg mg-horizon__svg--narrow"
+    viewBox="0 0 480 250"
+    preserveAspectRatio="xMidYMax slice"
+    role="presentation"
+    focusable="false"
+  >
+    <defs>
+      <linearGradient
+        class="mg-river-fade"
+        id="mg-river-n-fade"
+        gradientUnits="userSpaceOnUse"
+        x1="244" y1="209" x2="156" y2="252"
+      >
+        <stop offset="0" stop-opacity="0" />
+        <stop offset="0.28" stop-opacity="0.9" />
+        <stop offset="0.55" stop-opacity="1" />
+        <stop offset="1" stop-opacity="1" />
+      </linearGradient>
+
+      <linearGradient class="mg-haze" id="mg-haze-n" gradientUnits="userSpaceOnUse"
+                      x1="0" y1="136" x2="0" y2="206">
+        <stop offset="0" stop-opacity="0" />
+        <stop offset="0.55" stop-opacity="0.4" />
+        <stop offset="1" stop-opacity="0.72" />
+      </linearGradient>
+    </defs>
+
+    <Bird x={196} y={74} index={1} />
+    <Bird x={226} y={84} scale={0.8} index={2} />
+
+    <MountainRange ridge={NARROW_RIDGE} baseline={250} snowline={86} />
+
+    <path class="mg-mist" d="M 0 146 C 90 138, 200 144, 300 138
+      C 390 132, 440 140, 480 136 L 480 182 L 0 182 Z" />
+
+    <MountainRange ridge={NARROW_RIDGE_B} baseline={250} snowline={120} class="mg-range--b" />
+
+    <Trees trees={NARROW_TREES_FAR} class="mg-tree--far" />
+
+    <path class="mg-mist mg-mist--b" d="M 0 174 C 120 168, 260 174, 380 168
+      C 440 165, 460 171, 480 168 L 480 204 L 0 204 Z" />
+
+    <path class="mg-terrain-hill" d="M 0 250 L 0 192
+      C 90 186, 190 196, 290 190 C 380 185, 440 194, 480 190 L 480 250 Z" />
+
+    <Trees trees={NARROW_TREES_HILL} class="mg-tree--hill" />
+
+    <path class="mg-terrain-mid" d="M 0 250 L 0 212
+      C 70 206, 150 202, 230 206 C 310 210, 390 214, 480 210 L 480 250 Z" />
+
+    <Trees trees={NARROW_TREES} />
+
+    <path class="mg-terrain-near" d="M 0 250 L 0 232
+      C 90 227, 190 224, 290 227 C 370 229, 430 231, 480 232 L 480 250 Z" />
+
+    <path class="mg-path mg-path--far" d={smoothPath(NARROW_PATH_FAR)} />
+    <path class="mg-path mg-path--mid" d={smoothPath(NARROW_PATH_MID)} />
+    <path class="mg-path mg-path--near" d={smoothPath(NARROW_PATH_NEAR)} />
+
+    <path class="mg-river" d={channel(NARROW_RIVER)} />
+    <path class="mg-river__flow" d="M 130 248 L 158 249 M 184 244 L 158 245
+      M 132 240 L 112 241 M 130 236 L 154 235 M 168 231 L 148 232
+      M 150 227 L 166 226" />
+
+    <Rock x={230} y={228} width={4.5} height={2.4} />
+    <Tuft x={244} y={228} scale={0.8} />
+    <Tuft x={352} y={230} scale={0.75} />
+
+    {/* Campsite. The rock that sat here moved left so the tent isn't pitched
+        on it. */}
+    <ellipse class="mg-clearing" cx="295" cy="228" rx="66" ry="6" />
+    <Spot spot="camping" x={318} y={228} scale={1.68} hit={[-47, -24, 66, 25]}>
+      <Campsite />
+    </Spot>
+
+    {/* Hiker on the track */}
+    <Spot spot="hiking" x={390} y={222} scale={1.28} hit={[-16, -34, 34, 41]}>
+      <Hiker />
+    </Spot>
+
+    {/* Angler, thigh-deep. `castEnd` read off NARROW_RIVER the same way the wide
+        one is — see there. The narrow channel sits much closer to him, so the
+        cast is a shorter, mostly-downward drop rather than a long forward
+        reach. */}
+    <Spot spot="fishing" x={140} y={240} scale={1.8} hit={[-12, -34, 50, 30]}>
+      <Angler waterline={8.5} clipId="mg-wade-n" castEnd={[29, -3.5]} />
+    </Spot>
+
+    {/* Ground station, foreground left */}
+    <Spot spot="cubesats" pause x={40} y={244} scale={1.9} hit={[-26, -70, 78, 74]}>
+      <Station />
+    </Spot>
+
+    <path class="mg-terrain-fore" d="M 0 250 L 0 246
+      C 120 243, 260 248, 380 245 C 430 243, 460 247, 480 245 L 480 250 Z" />
+
+    <Tuft x={22} y={247} scale={1.15} />
+    <Tuft x={34} y={249} scale={0.9} />
+    <Tuft x={404} y={248} scale={1.1} />
+    <Tuft x={416} y={246} scale={0.9} />
+  </svg>
+</div>
+
+<style>
+  /* The elastic part of the hero. A zero basis with a huge flex-grow means it
+     takes whatever height the copy above it did not, so the band always lands
+     flush on the fold and there is never a strip of dead space beneath it.
+
+     `max-height` stops it at its own aspect ratio (260/1200 = 21.67% of the
+     width), which is what keeps `slice` cropping sky off the TOP and never the
+     sides — past the aspect, slice starts scaling by height and eats the station
+     and the cliff. `min-height` is the other end: on a window too cramped to
+     give it anything, the band holds a floor rather than collapsing.
+
+     The cap IS the aspect ratio. If the two disagree the band either crops the
+     sides or scales by height, which would also break the cliff layer's scale
+     match — see CliffFace.astro. */
+  .mg-hero__horizon {
+    flex: 1000 0 0;
+    min-height: min(21.67vw, 18svh);
+    max-height: 21.67vw;
+    position: relative;
+    z-index: 1;
+    /* Tight against the standing rail: the scene is meant to come right up to
+       the copy, and this gap is height the landscape would rather have. */
+    margin-top: clamp(0.3rem, 1vh, 0.7rem);
+    pointer-events: none;
+    /* The SVG below is pinned to this band's floor at its FULL aspect height and
+       is allowed to spill up out of the band — see there. */
+    overflow: visible;
+  }
+
+  /* Pinned to the band's floor and sized to the panorama's exact aspect ratio
+     rather than stretched to fill the band, which is usually shorter than that.
+     Two things follow. `slice` now crops nothing, so the whole ridge line is
+     drawn instead of the highest peaks being sheared off flat at the band's top
+     edge. And the part of the scene that no longer fits inside the band overflows
+     UPWARD, behind the standing rail — so the mountains read as continuing up
+     behind that bar rather than being cut by it. The band still reserves its own
+     height in the flex column above, so the fold and the layout are unchanged;
+     only the sky and the peaks that were being clipped now show through. */
+  .mg-horizon__svg {
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1200 / 260;
+  }
+
+  .mg-horizon__svg--narrow {
+    display: none;
+    aspect-ratio: 480 / 250;
+  }
+
+  /* 480 x 250: the narrow composition is authored nearly as shallow as the wide
+     one, so its own aspect is usually the binding term and the crop stays small. */
+  @media screen and (max-width: 47.99em) {
+    .mg-hero__horizon {
+      min-height: min(52.1vw, 16svh);
+      max-height: 52.1vw;
+    }
+
+    .mg-horizon__svg--wide {
+      display: none;
+    }
+
+    .mg-horizon__svg--narrow {
+      display: block;
+    }
+  }
+</style>

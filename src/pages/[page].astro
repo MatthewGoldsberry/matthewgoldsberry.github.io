@@ -1,0 +1,40 @@
+---
+/**
+ * The standalone prose pages — /experience/ and /research/.
+ *
+ * One route rather than a file each: they are the same shape (frontmatter plus
+ * a Markdown body), so a shared route keeps them from drifting apart. Adding a
+ * page means dropping a Markdown file into src/content/pages/.
+ */
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import ProseLayout from "../layouts/ProseLayout.astro";
+
+/* Deliberately not annotated `: GetStaticPaths` — see the note in
+   projects/[...slug].astro. The entry is typed on `Astro.props` instead. */
+export async function getStaticPaths() {
+  const pages = await getCollection("pages");
+  return pages.map((entry) => ({
+    params: { page: entry.id },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<"pages">;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<ProseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  lede={entry.data.lede}
+  heroImage={entry.data.heroImage}
+  heroImageAlt={entry.data.heroImageAlt}
+  heroActionLabel={entry.data.heroActionLabel}
+  heroActionHref={entry.data.heroActionHref}
+>
+  <Content />
+</ProseLayout>

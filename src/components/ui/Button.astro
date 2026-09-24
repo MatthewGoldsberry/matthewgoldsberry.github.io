@@ -1,0 +1,57 @@
+---
+/**
+ * The site's one button. Always a link — nothing here submits anything.
+ *
+ * `primary` fills with the accent and always takes dark ink, because the accent
+ * is a light amber in both schemes; a token that flipped with the scheme would
+ * put light text on a light fill in one of them.
+ */
+interface Props {
+  href: string;
+  primary?: boolean;
+  /** Opens in a new tab with the usual rel hardening. Inferred for external links. */
+  external?: boolean;
+  download?: boolean;
+  /** A tighter size for a row that wants to read as secondary chrome. */
+  small?: boolean;
+  class?: string;
+}
+
+const {
+  href,
+  primary = false,
+  external,
+  download = false,
+  small = false,
+  class: className = "",
+} = Astro.props;
+
+const isExternal = external ?? /^https?:\/\//.test(href);
+
+const base = [
+  "inline-flex items-center gap-2 rounded-full border",
+  "font-mono uppercase no-underline",
+  "transition-[background,border-color,color] duration-150 ease-mg",
+].join(" ");
+
+const size = small
+  ? "px-3.5 py-1.5 text-[0.62rem] tracking-[0.05em]"
+  : [
+      "px-5 py-2.5 text-[0.72rem] tracking-[0.06em]",
+      "max-[26em]:px-3.5 max-[26em]:py-2 max-[26em]:text-[0.66rem] max-[26em]:tracking-[0.04em]",
+    ].join(" ");
+
+const variant = primary
+  ? "border-accent bg-accent font-semibold text-on-accent hover:border-accent-text hover:bg-accent-text"
+  : "border-edge-strong text-ink hover:border-accent hover:bg-accent-soft hover:text-accent-text";
+---
+
+<a
+  href={href}
+  class={`${base} ${size} ${variant} ${className}`}
+  target={isExternal ? "_blank" : undefined}
+  rel={isExternal ? "noopener noreferrer" : undefined}
+  download={download ? "" : undefined}
+>
+  <slot />
+</a>

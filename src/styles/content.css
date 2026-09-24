@@ -1,0 +1,586 @@
+/* ==========================================================================
+   Content components — the class vocabulary that Markdown bodies may use.
+
+   Why these are classes rather than utilities: the project writeups are
+   long-form Markdown with occasional blocks of authored HTML, and Markdown
+   cannot import a component or carry a utility list without turning every
+   writeup into JSX. So the handful of blocks a writeup needs get named classes,
+   and those classes are composed here FROM the same Tailwind theme everything
+   else uses. The values still have exactly one source.
+
+   Anything rendered by a page or a component uses utilities directly. This file
+   is only the contract with Markdown. Keep it small: if a writeup needs
+   something genuinely bespoke, that is a sign the page should be `.mdx` and
+   import a real component.
+   ========================================================================== */
+
+@layer components {
+  /* Section eyebrow — the recurring mono readout label ---------------------- */
+  .mg-eyebrow {
+    @apply mt-22 mb-5 flex items-center gap-3 font-mono text-label tracking-[0.14em] text-ink-faint uppercase;
+  }
+
+  .mg-eyebrow::after {
+    @apply h-px flex-1 bg-edge content-[''];
+  }
+
+  /* For an eyebrow directly under `.mg-project-header`: that block already
+     closes with its own bottom margin, so the usual `mt-22` on top of it
+     doubled up into a gap far bigger than a now-short header warrants. */
+  .mg-eyebrow--flush {
+    @apply mt-0;
+  }
+
+  /* Project header — role, collaborators, stack, and the links -------------- */
+  .mg-project-header {
+    @apply my-5 mb-8 flex flex-col gap-3 border-y border-edge py-5;
+  }
+
+  /* For a header that already ends in its own `mb-8` (ProseLayout's title
+     block) — without this, that margin and this block's own `my-5` top
+     margin stack, and the border-top reads as a stray line hanging below the
+     title rather than as this block's own edge. */
+  .mg-project-header--flush {
+    @apply mt-0;
+  }
+
+  /* A one-line header (nothing after the top line worth closing off again) —
+     drop the bottom rule so what follows isn't fenced in on both sides. */
+  .mg-project-header--no-bottom-rule {
+    @apply border-b-0 pb-0;
+  }
+
+  .mg-project-header > * {
+    @apply m-0 max-w-none;
+  }
+
+  .mg-meta {
+    @apply flex flex-wrap gap-5 font-mono text-label tracking-[0.06em] text-ink-faint uppercase;
+  }
+
+  .mg-meta strong {
+    @apply font-normal text-ink-muted;
+  }
+
+  /* Inline link row — the same mono readout a project card's "Live demo /
+     Source" row uses, for prose that wants to point at a couple of related
+     pages without a full row of `.mg-btn`s. Underline and hover colour come
+     from the `.prose-mg a` rule already; this just sets the row's type. */
+  .mg-link-row {
+    @apply m-0 flex flex-wrap gap-4 font-mono text-label tracking-[0.06em] text-accent-text uppercase;
+  }
+
+  /* Pills ------------------------------------------------------------------ */
+  .mg-pills {
+    @apply m-0 flex list-none flex-wrap gap-1 p-0;
+  }
+
+  .mg-pills li {
+    @apply m-0 rounded-full border border-edge bg-bg-raised px-2.5 py-0.5 font-mono text-[0.66rem] tracking-[0.05em] whitespace-nowrap text-ink-muted;
+  }
+
+  /* The prose plugin puts markers and padding on list items; these are chips. */
+  .mg-pills li::marker {
+    content: "";
+  }
+
+  /* Buttons ---------------------------------------------------------------- */
+  .mg-btn-row {
+    @apply my-5 flex flex-wrap gap-2;
+  }
+
+  .mg-btn-row--flush {
+    @apply mt-0 mb-2;
+  }
+
+  .mg-btn {
+    @apply inline-flex items-center gap-2 rounded-full border border-edge-strong px-5 py-2.5 font-mono text-[0.72rem] tracking-[0.06em] text-ink uppercase no-underline;
+    @apply transition-[background,border-color,color] duration-150 ease-mg;
+  }
+
+  .mg-btn:hover {
+    @apply border-accent bg-accent-soft text-accent-text;
+  }
+
+  .mg-btn--primary {
+    @apply border-accent bg-accent font-semibold text-on-accent;
+  }
+
+  .mg-btn--primary:hover {
+    @apply border-accent-text bg-accent-text text-on-accent;
+  }
+
+  /* Timeline — experience and education -------------------------------------
+     Each entry is its own card rather than a dot on a connecting line: a
+     coloured spine down the left edge carries the "still going" signal the
+     dot used to (amber and lit for a current role, a quiet edge tone once it
+     ends), and the card itself gives a logo somewhere to actually sit — see
+     `.mg-entry--logo-bg` below. */
+  .mg-timeline {
+    @apply my-8 flex flex-col gap-4;
+  }
+
+  .mg-entry {
+    @apply relative overflow-hidden rounded-2xl border border-edge-strong bg-surface p-5 pl-7;
+  }
+
+  /* z-2: above `.mg-entry--logo-bg`'s ::after (an auto-stacked sibling that
+     would otherwise paint over this in DOM order, covering the bar since it
+     spans the same left edge). */
+  .mg-entry::before {
+    @apply absolute inset-y-0 left-0 z-[2] w-1 bg-edge-strong content-[''];
+  }
+
+  .mg-entry--current::before {
+    @apply bg-accent;
+  }
+
+  /* A role with a picture of the place beside it: a fixed-width frame on the
+     left, the role's text in a body column that takes the rest. `items-start`
+     pins the frame to the top of a tall entry rather than centring it. The
+     text has to be wrapped in `.mg-entry__body` — Markdown gives the frame and
+     the paragraphs as flat siblings, and the flex row needs them grouped.
+     Stacks on a phone, where a 6rem column would leave the text no room. */
+  .mg-entry--media {
+    @apply flex items-start gap-5;
+  }
+
+  .mg-entry__body {
+    @apply relative z-[1] min-w-0 flex-1;
+  }
+
+  /* `block` explicitly: as a flex child it is blockified for free, but the
+     phone layout below drops the flex and a bare <span> would fall back to
+     inline, where `width` is ignored and the image blows out to full width. */
+  .mg-entry__media {
+    @apply relative z-[1] block w-24 shrink-0 overflow-hidden rounded-sm border border-edge bg-bg-raised;
+    aspect-ratio: 1;
+  }
+
+  /* The prose img rule adds its own border and radius; the frame already has
+     both, so turn them off on the inner image. */
+  .mg-entry__media img {
+    @apply m-0 size-full rounded-none border-0 object-contain p-2;
+  }
+
+  /* A photograph fills the frame edge to edge; only logos are inset. */
+  .mg-entry__media--photo img {
+    @apply p-0 object-cover;
+  }
+
+  /* A cyan-and-white wordmark has nothing to sit on against the page; give it
+     its own dark plate. */
+  .mg-entry__media--dark {
+    @apply border-transparent bg-ink;
+  }
+
+  @media (max-width: 34.9em) {
+    .mg-entry--media {
+      @apply block;
+    }
+
+    .mg-entry__media {
+      @apply mb-3;
+    }
+  }
+
+  /* The organisation's own mark, ghosted into the card behind its text —
+     background, not a badge. Vector wordmarks read fine even this faint,
+     which is what makes them fair game for this treatment; a photograph
+     would lose all its information at the same opacity, so `.mg-entry--media`
+     above stays the framed, full-strength treatment for those. The image
+     itself is set per entry via a `--mg-entry-logo` custom property (an
+     inline style, since a content class can't carry a URL) rather than a
+     background-image utility, so this is the one rule that has to spell out
+     "background-image" by hand.
+
+     Only use this on a mark that is transparent OUTSIDE its lettering/shape —
+     the `::after` overlay fades it, it doesn't hide an opaque background
+     behind it. Discovery Lab Global's source asset shipped on its own solid
+     blue plate; used as-is, that whole plate tinted the card a visible
+     off-colour instead of blending into `bg-surface`. The plate was chroma-
+     keyed out (a near-uniform fill, easy to key) before this was applied —
+     a mark that doesn't key out cleanly belongs on `.mg-entry--media` instead,
+     framed at full strength rather than faded. */
+  .mg-entry--logo-bg {
+    background-image: var(--mg-entry-logo);
+    background-repeat: no-repeat;
+    background-position: center;
+    /* `cover` was cropping a wide, short wordmark down to an unrecognisable
+       fragment — a single letter's straight edge, blown up, reads as a
+       glitch rather than a logo. Stretching to the card's exact box keeps
+       the whole mark in frame (proportion be damned) on every entry, no
+       matter how tall its text happens to make the card. `--mg-entry-logo-
+       size` defaults to that full stretch but is overridable per entry
+       (inline, alongside the other `--mg-entry-logo-*` vars) for a mark that
+       reads better a touch smaller than the card it's watermarking. */
+    background-size: var(--mg-entry-logo-size, 100% 100%);
+  }
+
+  .mg-entry--logo-bg::after {
+    @apply pointer-events-none absolute inset-0 bg-surface content-[''];
+    /* How much of the logo shows through: the scheme's base (global.css),
+       plus this entry's own daytime boost if it sets one inline — a pale mark
+       needs more by day than a saturated one. `--mg-day` is 0 at night, so
+       the boost only ever applies by day. The rest is this overlay. */
+    opacity: calc(
+      1 - (var(--mg-entry-logo-strength) + var(--mg-day) * var(--mg-entry-logo-day-boost, 0))
+    );
+  }
+
+  .mg-entry--logo-bg > * {
+    @apply relative z-[1];
+  }
+
+  /* A second piece of the same mark, drawn in `--color-ink` instead of baked
+     into `--mg-entry-logo`'s own colours — Tenet3's "3" and its ® were a flat
+     white in the source art, invisible against a light card. `mask-image`
+     recolours that shape with whatever `--color-ink` resolves to (near-black
+     by day, near-white by night) rather than fighting the scheme with a fixed
+     colour. Its own `--mg-entry-logo-ink-strength` opacity, not the ::after
+     overlay's — that overlay only dims the *image* layer; stacking this under
+     it too would mute it twice. Optional: an entry with nothing to fix up
+     (Discovery Lab Global) simply has no `--mg-entry-logo-ink` and this
+     renders nothing.
+
+     Declared after `.mg-entry--logo-bg > *` on purpose: both rules are one
+     class specific, so position here only wins the tie by coming second — a
+     `position: relative` from that rule would otherwise land after this one's
+     `absolute` and silently override it. */
+  .mg-entry__logo-ink {
+    @apply pointer-events-none absolute inset-0 z-[1] bg-ink;
+    mask-image: var(--mg-entry-logo-ink);
+    -webkit-mask-image: var(--mg-entry-logo-ink);
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-size: var(--mg-entry-logo-size, 100% 100%);
+    -webkit-mask-size: var(--mg-entry-logo-size, 100% 100%);
+    /* Same base-plus-daytime-boost as the image layer, with its own pair. */
+    opacity: calc(
+      var(--mg-entry-logo-ink-strength) + var(--mg-day) * var(--mg-entry-logo-ink-day-boost, 0)
+    );
+  }
+
+  .mg-entry__role {
+    @apply m-0 font-display text-[1.05rem] font-semibold tracking-[-0.015em] text-ink;
+  }
+
+  .mg-entry__meta {
+    @apply mt-1 mb-2 font-mono text-label tracking-[0.06em] text-ink-faint uppercase;
+  }
+
+  /* Milestone timeline — a real vertical line with circle markers, for a
+     chronological log of short, one-line events (a research page's progress)
+     rather than the multi-paragraph roles `.mg-timeline` above holds as
+     cards. The line is the connecting thread; each circle is a point on it,
+     lit and coloured while that chapter is still open. */
+  .mg-milestones {
+    @apply relative my-8 border-l border-edge pl-6;
+  }
+
+  .mg-milestone {
+    @apply relative pb-8;
+  }
+
+  .mg-milestone:last-child {
+    @apply pb-0;
+  }
+
+  .mg-milestone::before {
+    @apply absolute top-[0.3em] -left-[calc(1.5rem+4px)] size-[7px] rounded-full border border-edge-strong bg-bg content-[''];
+  }
+
+  .mg-milestone--current::before {
+    @apply border-accent bg-accent;
+  }
+
+  .mg-milestone__date {
+    @apply m-0 font-mono text-label tracking-[0.06em] text-accent-text uppercase;
+  }
+
+  .mg-milestone__desc {
+    @apply m-0 mt-1 text-ink-muted;
+  }
+
+  /* Admonitions — `:::note`, `:::tip`, `:::info`, `:::example`, `:::quote`,
+     rendered by `remark-admonitions` (see that file for the source syntax).
+     Two accent families, not one per type: `--color-accent` for the callouts
+     that extend the body text (note, tip, example, quote) and `--color-signal`
+     — the same cyan the orbital/machine details in the scene use — for `info`,
+     so a reader can tell "worth pausing on" from "extends what you just read"
+     at a glance without the page reaching for colours the palette doesn't
+     have. A `{collapsible}` attribute renders as `<details>`/`<summary>`
+     instead of `<div>`/`<p>`, so the marker rules below target the element
+     type rather than a modifier class. */
+  .mg-admonition {
+    @apply my-6 rounded-[--radius-md] border border-accent-line bg-surface px-5 py-4;
+  }
+
+  .mg-admonition > :last-child {
+    @apply mb-0;
+  }
+
+  .mg-admonition__title {
+    @apply m-0 flex items-center gap-2 font-mono text-label tracking-[0.08em] text-accent-text uppercase;
+  }
+
+  .mg-admonition__title::before {
+    @apply size-1.5 shrink-0 rounded-full bg-accent content-[''];
+  }
+
+  .mg-admonition--info {
+    @apply border-signal/40;
+  }
+
+  .mg-admonition--info .mg-admonition__title {
+    @apply text-signal;
+  }
+
+  .mg-admonition--info .mg-admonition__title::before {
+    @apply bg-signal;
+  }
+
+  /* `<summary>` already renders a disclosure triangle; swap it for one that
+     matches the dot-marker rhythm of every other title in this component
+     sheet instead of stacking a second, differently-styled arrow beside it. */
+  .mg-admonition summary.mg-admonition__title {
+    @apply cursor-pointer list-none;
+  }
+
+  .mg-admonition summary.mg-admonition__title::-webkit-details-marker {
+    display: none;
+  }
+
+  .mg-admonition summary.mg-admonition__title::after {
+    @apply ml-auto text-ink-faint content-['+'];
+    font-family: var(--font-mono);
+  }
+
+  .mg-admonition[open] > summary.mg-admonition__title::after {
+    content: "−";
+  }
+
+  .mg-admonition[open] > summary.mg-admonition__title {
+    @apply mb-3;
+  }
+
+  /* Code blocks — a fenced block in Markdown, wrapped by `rehype-code-frame`
+     and highlighted by Shiki with both a light and a dark theme. Shiki is set
+     to `defaultColor: false`, so every token carries its colour only as a
+     `--shiki-light` / `--shiki-dark` pair; `light-dark()` picks one, which is
+     fine here because these are colours (see the note on `light-dark()` in
+     global.css). The frame's own ground is the site's, not the theme's, so a
+     block sits in the palette rather than as a foreign rectangle on it. */
+  .mg-code {
+    @apply relative my-5 overflow-hidden rounded-[--radius-md] border border-edge bg-bg-raised;
+    box-shadow: inset 3px 0 0 var(--color-accent-line);
+  }
+
+  .mg-code pre {
+    @apply m-0 py-3.5 pr-14 pl-5 font-mono text-[0.82rem] leading-relaxed;
+    tab-size: 2;
+  }
+
+  .mg-code pre,
+  .mg-code pre span {
+    color: light-dark(var(--shiki-light), var(--shiki-dark));
+  }
+
+  .mg-code pre:focus-visible {
+    @apply outline-2 -outline-offset-2 outline-accent;
+  }
+
+  /* Top-right, GitHub-style: out of the way until the block is hovered or
+     anything in it has focus. Touch screens have no hover to reveal it by,
+     so there it just stays visible. */
+  .mg-code__copy {
+    @apply absolute top-2 right-2 flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-[--radius-sm] border border-edge bg-surface px-2 text-ink-faint;
+    @apply opacity-0 transition-[opacity,color,border-color] duration-150 ease-mg;
+  }
+
+  .mg-code:hover .mg-code__copy,
+  .mg-code:focus-within .mg-code__copy,
+  .mg-code__copy[data-state] {
+    @apply opacity-100;
+  }
+
+  @media (hover: none) {
+    .mg-code__copy {
+      @apply opacity-100;
+    }
+  }
+
+  .mg-code__copy:hover {
+    @apply border-accent-line text-accent-text;
+  }
+
+  .mg-code__copy:focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+
+  .mg-code__copy[data-state="done"] {
+    @apply border-accent-line text-accent-text;
+  }
+
+  .mg-code__icon--done,
+  .mg-code__copy[data-state="done"] .mg-code__icon--copy {
+    @apply hidden;
+  }
+
+  .mg-code__copy[data-state="done"] .mg-code__icon--done {
+    @apply block;
+  }
+
+  .mg-code__status {
+    @apply font-mono text-label tracking-[0.06em] uppercase;
+  }
+
+  .mg-code__status:empty {
+    @apply hidden;
+  }
+
+  /* Tables — a Markdown table, wrapped by `rehype-table-frame`. The frame
+     carries the border and radius (a collapsed table ignores border-radius)
+     and scrolls sideways on a phone instead of widening the page. It is only
+     as wide as the table and centred, like every other figure in the doc
+     column, so a four-column table doesn't stretch into a sparse 960px grid. */
+  .mg-table {
+    @apply my-6 w-fit max-w-full overflow-x-auto rounded-[--radius-md] border border-edge bg-surface;
+    margin-inline: auto;
+  }
+
+  .mg-table table {
+    @apply m-0 min-w-full border-collapse text-[0.9rem] leading-snug;
+    /* Digits of one width, so decimals line up down a column of figures. */
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mg-table :is(th, td) {
+    @apply border-b border-edge px-5 py-2.5 whitespace-nowrap;
+  }
+
+  .mg-table thead th {
+    @apply border-b-edge-strong bg-bg-raised font-mono text-label font-medium tracking-[0.08em] text-ink-faint uppercase;
+  }
+
+  .mg-table tbody td {
+    @apply text-ink-muted;
+  }
+
+  /* The first column is usually the row's name — "Above", "Aligned" — so it
+     reads as a label rather than as one more value. */
+  .mg-table tbody td:first-child {
+    @apply font-medium text-ink;
+  }
+
+  .mg-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .mg-table tbody tr:nth-child(even) {
+    background: color-mix(in srgb, var(--color-ink) 3%, transparent);
+  }
+
+  .mg-table tbody tr:hover {
+    background: var(--color-accent-soft);
+  }
+
+  /* Markdown's `:---:` / `---:` alignment arrives as an `align` attribute,
+     which is only a presentational hint — any author rule setting text-align
+     beats it. So the three are mapped explicitly, and a column with no
+     alignment falls back to the start. */
+  .mg-table :is(th, td):not([align]),
+  .mg-table [align="left"] {
+    @apply text-left;
+  }
+
+  .mg-table [align="center"] {
+    @apply text-center;
+  }
+
+  .mg-table [align="right"] {
+    @apply text-right;
+  }
+
+  /* A figure set beside the text rather than above it — the docs/wiki
+     layout. A photo or a mission patch centred on its own row left most of
+     the 60rem column empty on either side of it, and pushed the words it
+     illustrates below the fold; floated, the section's paragraphs wrap
+     around it and the same content takes half the height.
+
+     Put it directly after a section's heading, so the heading still runs the
+     full width and the image sits level with the section's first line. It
+     floats right by default; `--left` alternates sides when a page has two.
+     Every `h2` clears floats (see global.css), so an image never pokes into
+     the next section, and the blocks that paint their own box — callouts,
+     code, tables, lists — become `flow-root` so they shrink beside the image
+     instead of running their backgrounds underneath it.
+
+     Below 40em there is no room for two columns: it becomes an ordinary
+     centred figure again, held smaller than a full-width image. */
+  .prose-mg .mg-figure--aside {
+    float: right;
+    width: min(36%, 21rem);
+    margin: 0.3rem 0 1rem 2rem;
+  }
+
+  .prose-mg .mg-figure--aside.mg-figure--left {
+    float: left;
+    margin: 0.3rem 2rem 1rem 0;
+  }
+
+  /* Three classes to outrank the doc column's own image rule
+     (`.prose-mg.prose-mg--doc img`, which caps height and centres). Here the
+     figure sets the size and the image just fills it. */
+  .prose-mg.prose-mg--doc .mg-figure--aside img {
+    width: 100%;
+    max-height: none;
+  }
+
+  /* The first paragraph beside the image starts level with its top, instead
+     of a paragraph margin lower. */
+  .prose-mg .mg-figure--aside + p {
+    margin-top: 0;
+  }
+
+  /* `.mg-pills` excluded: it is a <ul> too, and this would override its
+     `flex` and stack the chips into a list. */
+  .prose-mg--doc :is(.mg-todo, .mg-admonition, .mg-code, .mg-table, ul:not(.mg-pills), ol, blockquote) {
+    display: flow-root;
+  }
+
+  @media (max-width: 40em) {
+    .prose-mg .mg-figure--aside,
+    .prose-mg .mg-figure--aside.mg-figure--left {
+      float: none;
+      width: auto;
+      margin: 1.25rem 0;
+    }
+
+    .prose-mg.prose-mg--doc .mg-figure--aside img {
+      width: auto;
+      max-height: 18rem;
+    }
+  }
+
+  /* Author-facing TODO marker — deliberately loud so it cannot ship unnoticed */
+  .mg-todo {
+    @apply my-3 block rounded-[--radius-md] border border-dashed border-accent-line px-5 py-3 font-mono text-[0.72rem] leading-relaxed text-ink-muted;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--color-accent-soft) 0 10px,
+      transparent 10px 20px
+    );
+  }
+
+  .mg-todo::before {
+    @apply font-bold tracking-[0.08em] text-accent-text content-['TODO_—_'];
+  }
+
+  /* Embedded résumé -------------------------------------------------------- */
+  .mg-resume-frame {
+    @apply h-[min(1030px,88vh)] w-full rounded-[--radius-md] border border-edge bg-bg-raised;
+  }
+}

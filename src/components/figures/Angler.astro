@@ -1,0 +1,218 @@
+---
+/**
+ * Angler on the drift, wading.
+ *
+ * Shoulder, elbow and wrist each stop a beat apart, and the ROD ITSELF bows
+ * through one gentle curve from grip to tip — that curve is what reads as the
+ * rod loading, in place of two straight segments meeting at a kink. The pose in
+ * scene.css is the drift, which is the only attitude in which the rigid line
+ * actually reaches the water.
+ *
+ * THE ROD is a tapered fill (`taperedRod`, a ribbon of decreasing width along a
+ * quadratic bezier), not a stroked line: a real rod's diameter runs continuously
+ * from the grip down to a whip-thin tip, which two flat stroke widths could only
+ * ever approximate as steps. A small reel hangs off the butt and one guide rides
+ * the curve — a wink of hardware at this size, not a diagram.
+ *
+ * WADING. `waterline` is how far up the figure the surface sits, in local units
+ * off the skeleton's ground plane — so 10 is mid-thigh, given the knee at 7.2
+ * and the hip at 13.2. Everything below it is clipped away rather than drawn and
+ * covered: the river is a translucent fill, so painting it over the legs left
+ * them clearly visible through the water, and at this flat, minimal register a
+ * clean cut at the surface plus a wake ring reads as "standing in the river"
+ * far better than a tinted pair of shins does.
+ *
+ * THE CAST is aimed, not guessed. `castEnd` is where the fly lands, in the SAME
+ * frame the rod is drawn in but with the arm's fixed tilt already applied (see
+ * `toBodyFrame` below) — there is no way to derive that point generically,
+ * because every composition draws its own river, so whoever places this angler
+ * has to read the landing spot off the actual channel and pass it in. The line
+ * and its splash ring are drawn OUTSIDE `mg-angler__body`'s wading clip on
+ * purpose: that clip exists to hide the submerged legs, and left the cast
+ * itself sharing that fate — its tail was landing on the far side of the clip
+ * line, in the CLIPPED-AWAY region, so it read as cut off short rather than
+ * touching water. A cast that lands outside the river reads the same way —
+ * floating past the bank — which is what `castEnd` is tuned against.
+ */
+interface Props {
+  /**
+   * Height of the water on the figure, in local units above the ground plane.
+   * Omit for an angler standing on dry land.
+   */
+  waterline?: number;
+  /**
+   * Unique id for this instance's clip path. Required when `waterline` is set —
+   * two anglers in one document must not share one.
+   */
+  clipId?: string;
+  /**
+   * Where the fly lands, as [x, y] in the rod's already-tilted frame (see
+   * `toBodyFrame`) — NOT the same numbering as `ROD_TIP` below. Tune this
+   * against the river shape in whichever composition places the angler; the
+   * default is a plausible reach for dry land, where there is no channel to
+   * check it against.
+   */
+  castEnd?: readonly [number, number];
+}
+
+const { waterline, clipId, castEnd } = Astro.props;
+const wading = waterline !== undefined && waterline > 0 && clipId !== undefined;
+const wl = waterline ?? 0.6;
+
+/* The rod, grip to tip. `ROD_CTRL` sits off the grip-to-tip chord, which is
+   what gives the rod its one bend; nudging it further off the chord loads it
+   harder. */
+const ROD_BUTT: readonly [number, number] = [4.6, -14.5];
+const ROD_CTRL: readonly [number, number] = [15.1, -25.4];
+const ROD_TIP: readonly [number, number] = [29, -31.4];
+const ROD_W0 = 1.3;
+const ROD_W1 = 0.12;
+
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
+/* The arm's cast pose is two FIXED rotations (see the static values in
+   scene.css: 4deg on .mg-angler__rod, 2deg on .mg-angler__fore — .mg-angler__arm
+   and the old .mg-angler__tip are 0deg, i.e. identity, so they drop out here).
+   Because they never animate, the line does not need to sit inside those
+   rotated groups to inherit them — it can bake the same rotation in by hand and
+   live outside the wading clip instead. */
+const ROD_ORIGIN: readonly [number, number] = [6.6, -16];
+const FORE_ORIGIN: readonly [number, number] = [3.6, -18.4];
+
+function rotatePt(
+  [px, py]: readonly [number, number],
+  deg: number,
+  [ox, oy]: readonly [number, number],
+): [number, number] {
+  const rad = (deg * Math.PI) / 180;
+  const c = Math.cos(rad);
+  const s = Math.sin(rad);
+  const dx = px - ox;
+  const dy = py - oy;
+  return [ox + dx * c - dy * s, oy + dx * s + dy * c];
+}
+
+const toBodyFrame = (p: readonly [number, number]): [number, number] =>
+  rotatePt(rotatePt(p, 4, ROD_ORIGIN), 2, FORE_ORIGIN);
+
+const [tipX, tipY] = toBodyFrame(ROD_TIP);
+const [endX, endY] = castEnd ?? [48, -6];
+
+/* A line under its own weight sags BELOW the straight tip-to-fly chord, not
+   above it — the interior control points sit at even thirds of that chord and
+   are pulled down (increasing y, since y is more negative UP in this frame) by
+   `sag`, tapering to nothing at the two ends the curve actually passes through.
+   `sag` scales with reach so a short drop does not belly out absurdly. */
+const dx = endX - tipX;
+const dy = endY - tipY;
+const reach = Math.hypot(dx, dy);
+const sag = reach * 0.16;
+const c1: [number, number] = [tipX + dx * 0.33, tipY + dy * 0.33 + sag];
+const c2: [number, number] = [tipX + dx * 0.66, tipY + dy * 0.66 + sag];
+const castLineD = `M ${r2(tipX)} ${r2(tipY)} C ${r2(c1[0])} ${r2(c1[1])}, ${r2(c2[0])} ${r2(c2[1])}, ${r2(endX)} ${r2(endY)}`;
+
+const quadPoint = (
+  p0: readonly [number, number],
+  c: readonly [number, number],
+  p1: readonly [number, number],
+  t: number,
+): [number, number] => [
+  (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * c[0] + t ** 2 * p1[0],
+  (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * c[1] + t ** 2 * p1[1],
+];
+
+/** A ribbon of linearly-tapering width along a quadratic bezier, as a closed
+ *  fill path — a tapered rod (or any whip-thin shaft) drawn the way a stroke of
+ *  fixed width cannot be. */
+function taperedRod(
+  p0: readonly [number, number],
+  c: readonly [number, number],
+  p1: readonly [number, number],
+  w0: number,
+  w1: number,
+  steps = 14,
+): string {
+  const top: [number, number][] = [];
+  const bot: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const [x, y] = quadPoint(p0, c, p1, t);
+    // Tangent of the quadratic at t, for the perpendicular the ribbon rides on.
+    const tx = 2 * (1 - t) * (c[0] - p0[0]) + 2 * t * (p1[0] - c[0]);
+    const ty = 2 * (1 - t) * (c[1] - p0[1]) + 2 * t * (p1[1] - c[1]);
+    const len = Math.hypot(tx, ty) || 1;
+    const nx = -ty / len;
+    const ny = tx / len;
+    const w = (w0 + (w1 - w0) * t) / 2;
+    top.push([x + nx * w, y + ny * w]);
+    bot.push([x - nx * w, y - ny * w]);
+  }
+  const fmt = (p: [number, number]) => `${r2(p[0])} ${r2(p[1])}`;
+  return (
+    `M ${fmt(top[0]!)} ` +
+    top
+      .slice(1)
+      .map((p) => `L ${fmt(p)}`)
+      .join(" ") +
+    " " +
+    bot
+      .slice()
+      .reverse()
+      .map((p) => `L ${fmt(p)}`)
+      .join(" ") +
+    " Z"
+  );
+}
+
+const rodD = taperedRod(ROD_BUTT, ROD_CTRL, ROD_TIP, ROD_W0, ROD_W1);
+const [guideX, guideY] = quadPoint(ROD_BUTT, ROD_CTRL, ROD_TIP, 0.42);
+---
+
+{
+  wading && (
+    <defs>
+      <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
+        {/* Keeps everything ABOVE the surface. Generous either side so the rod,
+            the line and the far arm are never caught by the edges. */}
+        <rect x="-80" y="-120" width="220" height={120 - wl} />
+      </clipPath>
+    </defs>
+  )
+}
+
+<g class="mg-angler">
+  <g class="mg-angler__body" clip-path={wading ? `url(#${clipId})` : undefined}>
+    <g class="mg-angler__sway">
+      <path class="mg-limb mg-part--far" d="M -0.6 -13.2 L -2.6 -7.4 L -1.8 -1.6" />
+      <g class="mg-angler__hand">
+        <path class="mg-limb mg-part--far" d="M 0 -21.6 L -2.8 -17.8" />
+        <g class="mg-angler__hand-fore">
+          <path class="mg-limb mg-part--far" d="M -2.8 -17.8 L -1 -13.8" />
+        </g>
+      </g>
+      <path class="mg-limb" d="M 0.6 -13.2 L 2.4 -7.6 L 1.6 -1.6" />
+      <path class="mg-torso" d="M 0 -13.2 C 0.7 -17, 0.5 -20, 0 -22.8" />
+      <circle class="mg-head" cx="0" cy="-24.8" r="1.9" />
+      <g class="mg-angler__arm">
+        <path class="mg-limb" d="M 0 -21.6 L 3.6 -18.4" />
+        <g class="mg-angler__fore">
+          <path class="mg-limb" d="M 3.6 -18.4 L 6.6 -16" />
+          <g class="mg-angler__rod">
+            <circle class="mg-reel" cx="3.5" cy="-13.8" r="0.9" />
+            <path class="mg-flyrod" d={rodD} />
+            <circle class="mg-flyrod-guide" cx={r2(guideX)} cy={r2(guideY)} r="0.3" />
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  {/* Line: outside the wading clip so the cast reaches water rather than being
+      eaten by the same cut that hides his legs — see the doc block above. */}
+  <path class="mg-line" d={castLineD} />
+
+  {/* The ring where he breaks the surface, and a second, wider one for the push
+      of water around a standing wader. */}
+  <ellipse class="mg-wake" cx="0" cy={-wl} rx="6.5" ry="1.5" />
+  {wading && <ellipse class="mg-wake mg-wake--outer" cx="0" cy={-wl} rx="10.5" ry="2.4" />}
+</g>

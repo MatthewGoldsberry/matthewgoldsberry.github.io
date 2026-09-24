@@ -1,0 +1,66 @@
+# Hover cards for the figures in the hero.
+
+leopardsat:
+  title: LEOPARDSat-1
+  image: /assets/media/projects/leopardsat-1/mission-patch.png
+  href: /projects/leopardsat-1/
+  text: >-
+    Ohio's first student-led satellite, launched on the NG24 resupply mission
+    and in Low Earth Orbit. On the OBC team I wrote the embedded C drivers for 
+    some of its sensors, then tested them on flight hardware and mocks
+    before it flew. Now I talk to it from the other end of the link.
+
+habsat:
+  title: HABSat-1
+  image: /assets/media/projects/habsat-1/mission-patch.png
+  href: /projects/habsat-1/
+  text: >-
+    CubeCats' next mission, and my senior design project: imaging harmful algae
+    blooms over Lake Erie. I lead the On-Board Computer team, owning the
+    architecture and flight software that run the camera, ADCS, and power, and
+    handle every exchange with the ground.
+
+cubesats:
+  title: The ground station
+  image: /assets/media/spots/ground-station.jpg
+  imageFit: cover
+  href: /projects/ground-station/
+  text: >-
+    The other half of the link. A pass gives us a few minutes to find a
+    satellite, track it through its Doppler shift, and pull its data down. I
+    work on the Python radio drivers built on RadioLib, the SDR receive chain,
+    pass prediction, and the FastAPI database server the telemetry lands in.
+
+climbing:
+  title: Climbing
+  image: /assets/media/spots/climbing.jpg
+  imageFit: cover
+  text: >-
+    Member of the UC Climbing Club. I love that it's as much a mental challenge
+    as a physical one: every route is a puzzle, and you have to read it
+    properly and then commit to the move.
+
+fishing:
+  title: Fly fishing
+  image: /assets/media/spots/fly-fishing.jpg
+  imageFit: cover
+  text: >-
+    I love exploring rivers and streams to fish, especially ones with a
+    great view. There's nothing like catching a fish on a fly I tied myself.
+
+camping:
+  title: Camping
+  image: /assets/media/spots/camping.jpg
+  imageFit: cover
+  text: >-
+    Some of my favorite nights are spent in a tent. I love sleeping under the
+    stars, and how camping gets me to places a day hike never could.
+
+hiking:
+  title: Hiking
+  image: /assets/media/spots/hiking.jpg
+  imageFit: cover
+  text: >-
+    I love exploring, on day hikes or backpacking trips, and going
+    after summits that are physically demanding and/or technical, where the view
+    has to be earned.

@@ -1,0 +1,249 @@
+---
+/**
+ * The cliff, as a full-height layer over the hero.
+ *
+ * It used to live inside the horizon band, which meant it could only ever be as
+ * tall as that band — a stub of rock in the bottom corner. Here it is its own
+ * absolutely-positioned layer spanning the whole hero, so the wall runs from the
+ * ground plane at the bottom to the top of the landing screen and the climber is
+ * genuinely up on something.
+ *
+ * SCALE. This is the whole difficulty, and the reason the viewBox numbers below
+ * are not round. The climber has to stay exactly the size of the camper and the
+ * hiker, so this layer's user-unit-to-pixel ratio has to equal the horizon
+ * band's. That band renders at `width / 1200` px per unit: it is `slice`, so its
+ * scale is `max(W/1200, bandH/210)`, and its height is capped at 17.5vw — which
+ * is 210/1200 — so both terms are exactly `W/1200`.
+ *
+ * To match, this layer is also 1200 units wide and also `slice`, which makes its
+ * scale `max(W/1200, H/VB_H)`. The horizontal term wins — and the scales agree —
+ * only while `VB_H >= 1200 * H / W`. VB_H is set to 1600 for that: it covers
+ * every window from the 768px breakpoint up, including tall narrow ones (at
+ * 780x900 the terms are 0.650 and 0.563, so width still governs). A rounder 1200
+ * would have broken exactly there, with the cliff drawn a size larger than the
+ * figures standing next to it.
+ *
+ * `YMax` anchors the viewBox bottom to the layer's bottom, which is the hero's
+ * bottom, which is where the panorama's ground plane sits — so the wall meets
+ * the ground rather than floating above it.
+ */
+import Cliff from "../figures/Cliff.astro";
+import Spot from "../figures/Spot.astro";
+import Place from "../figures/Place.astro";
+import Hit from "../figures/Hit.astro";
+import Climber from "../figures/Climber.astro";
+import { areteTopFor } from "../figures/types";
+import Draw from "../figures/Draw.astro";
+
+/* Wide layout. The anchor sits 2 units above the viewBox floor, exactly as it
+   did in the band, so the wall's foot lands in the same place relative to the
+   ground it did before. */
+const WIDE_VB_W = 1200;
+const WIDE_VB_H = 1600;
+const WIDE_ANCHOR_X = 1156;
+const WIDE_ANCHOR_Y = WIDE_VB_H - 2;
+
+/* Narrow layout. Same reasoning against the narrow band's 480-unit width: its
+   scale is W/480, so this must stay width-governed, which needs
+   VB_H >= 480 * H / W. 1200 covers a 390x900 phone (0.813 against 0.750). */
+const NARROW_VB_W = 480;
+const NARROW_VB_H = 1200;
+const NARROW_ANCHOR_X = 470;
+const NARROW_ANCHOR_Y = NARROW_VB_H - 2;
+
+/* How far back the rock MASS has to run so it always fills to the right edge.
+   The wall is drawn in a frame rotated -15°, so a mass point (x, y) lands at
+   screenX = anchorX + x·cos15 + y·sin15. Going up the wall y is increasingly
+   negative, which carries the mass LEFT — at the highest visible point
+   (y = top) the right edge would otherwise fall short of the viewBox and a
+   tall/narrow window shows sky in the top-right corner. Solve that boundary for
+   x and add margin; lower points on the wall already sit further right. */
+const SIN15 = Math.sin(Math.PI / 12);
+const COS15 = Math.cos(Math.PI / 12);
+const cliffBack = (anchorX: number, vbWidth: number, top: number): number =>
+  Math.ceil((vbWidth - anchorX - SIN15 * top) / COS15) + 90;
+
+const WIDE_TOP = areteTopFor(WIDE_ANCHOR_Y);
+const NARROW_TOP = areteTopFor(NARROW_ANCHOR_Y);
+const WIDE_BACK = cliffBack(WIDE_ANCHOR_X, WIDE_VB_W, WIDE_TOP);
+const NARROW_BACK = cliffBack(NARROW_ANCHOR_X, NARROW_VB_W, NARROW_TOP);
+
+/* Rope and protection. The rope runs from his tie-in THROUGH both quickdraws and
+   on down to the belayer: each cubic ends on a draw's rope-biner — the biner is
+   at local (x, y + 6*scale) inside Draw.astro, so these end points are read
+   straight off the <Draw> placements below — and the segment between the clips
+   bellies a little toward the void, which is what rope drag looks like on an
+   overhang. Move a draw and its rope end point has to move with it. */
+//                    tie-in            → draw 1 biner (13,-75.6) → draw 2 biner (7,-11.6) → void
+const WIDE_ROPE = "M 19 -123 C 16 -109, 14 -92, 13 -75.6 C 12 -63, 4 -33, 7 -11.6 C 9 6, -6 46, -22 88";
+//                     tie-in            → draw 1 biner (13,-83.7) → draw 2 biner (7,-29.7) → void
+const NARROW_ROPE = "M 18 -127 C 16 -113, 14 -100, 13 -83.7 C 12 -71, 4 -44, 7 -29.7 C 8 -14, -6 18, -18 46";
+
+/* Cracks and ledges.
+ *
+ * PLACEMENT RANGE. How much of the wall is on screen depends on the window: the
+ * visible height in local units is `1200 * heroHeight / viewportWidth`, divided
+ * by cos(15°). That is about -580 on a 1440x667 desktop, but nearer -1300 on a
+ * narrow tall window at the 768px breakpoint. So the band from -380 to -620 is
+ * the stretch that is essentially always on screen and carries most of the
+ * detail; the higher marks only pay off on taller windows, and are sparser
+ * because detail density should fall off up the wall — both because that is
+ * aerial perspective, and because a face uniformly covered in cracks reads as
+ * texture rather than as rock.
+ *
+ * The five lowest are the authored set from the band, unchanged. */
+const WIDE_CRACKS = [
+  "M 40 -376 L 52 -300 L 38 -232",
+  "M 96 -300 L 84 -228 L 98 -170",
+  "M 34 -244 L 46 -196 L 34 -150",
+  "M 112 -180 L 100 -100 L 114 -20",
+  "M 62 -60 L 74 20",
+  "M 66 -470 L 78 -404 L 60 -344",
+  "M 30 -520 L 44 -452 L 28 -396",
+  "M 116 -496 L 104 -420 L 118 -352",
+  "M 88 -604 L 76 -536 L 90 -470",
+  "M 44 -672 L 58 -600 L 40 -536",
+  "M 120 -700 L 108 -628 L 122 -560",
+  "M 70 -820 L 84 -740 L 66 -664",
+  "M 36 -900 L 50 -820 L 34 -742",
+  "M 108 -960 L 96 -880 L 110 -804",
+  "M 60 -1120 L 74 -1030 L 56 -948",
+  "M 40 -1290 L 54 -1190 L 38 -1100",
+];
+
+const WIDE_LEDGES = [
+  "M 84 -222 L 112 -214",
+  "M 46 -330 L 72 -322",
+  "M 34 -80 L 58 -74",
+  "M 54 -424 L 82 -416",
+  "M 96 -540 L 124 -532",
+  "M 40 -628 L 66 -620",
+  "M 86 -760 L 114 -752",
+  "M 48 -940 L 74 -932",
+  "M 92 -1180 L 118 -1172",
+];
+
+/* Same reasoning, against the narrow layout's shorter visible range: about -890
+   local on a 390x700 phone. */
+const NARROW_CRACKS = [
+  "M 40 -376 L 52 -300 L 38 -232",
+  "M 96 -240 L 84 -160 L 98 -90",
+  "M 34 -150 L 46 -96 L 34 -44",
+  "M 60 -470 L 72 -404 L 56 -344",
+  "M 28 -540 L 42 -468 L 26 -404",
+  "M 96 -560 L 84 -484 L 98 -416",
+  "M 52 -700 L 66 -620 L 48 -548",
+  "M 100 -800 L 88 -720 L 102 -648",
+  "M 36 -900 L 50 -816 L 34 -740",
+  "M 74 -1060 L 88 -970 L 70 -888",
+];
+
+const NARROW_LEDGES = [
+  "M 46 -270 L 70 -262",
+  "M 30 -70 L 52 -64",
+  "M 52 -430 L 78 -422",
+  "M 88 -620 L 112 -612",
+  "M 40 -780 L 64 -772",
+  "M 80 -1000 L 104 -992",
+];
+---
+
+<div class="mg-cliff-layer" aria-hidden="true">
+  <svg
+    class="mg-cliff-layer__svg mg-cliff-layer__svg--wide"
+    viewBox={`0 0 ${WIDE_VB_W} ${WIDE_VB_H}`}
+    preserveAspectRatio="xMidYMax slice"
+    role="presentation"
+    focusable="false"
+  >
+    <g class="mg-cliff" transform={`translate(${WIDE_ANCHOR_X} ${WIDE_ANCHOR_Y}) rotate(-15)`}>
+      <Cliff
+        variant="wide"
+        depth={200}
+        back={WIDE_BACK}
+        top={WIDE_TOP}
+        cracks={WIDE_CRACKS}
+        ledges={WIDE_LEDGES}
+      >
+        {/* Nothing is clipped to the rock: the climber is ON the arete, so their
+            outside hand and flagged foot cross the lip into open air. Rope and
+            draws live inside the spot so they dim with the figure; the hit box
+            stays down in the climber's own transform, which keeps the target on
+            the body rather than spread over the length of the rope. */}
+        <Spot spot="climbing">
+          <path class="mg-lead" d={WIDE_ROPE} />
+          <Draw x={13} y={-90} scale={2.4} />
+          <Draw x={7} y={-26} scale={2.4} />
+          <Place x={21} y={-95} scale={2.4}>
+            <Hit x={-12} y={-30} width={24} height={32} />
+            <Climber />
+          </Place>
+        </Spot>
+      </Cliff>
+    </g>
+  </svg>
+
+  <svg
+    class="mg-cliff-layer__svg mg-cliff-layer__svg--narrow"
+    viewBox={`0 0 ${NARROW_VB_W} ${NARROW_VB_H}`}
+    preserveAspectRatio="xMidYMax slice"
+    role="presentation"
+    focusable="false"
+  >
+    <g class="mg-cliff" transform={`translate(${NARROW_ANCHOR_X} ${NARROW_ANCHOR_Y}) rotate(-15)`}>
+      <Cliff
+        variant="narrow"
+        depth={160}
+        back={NARROW_BACK}
+        top={NARROW_TOP}
+        cracks={NARROW_CRACKS}
+        ledges={NARROW_LEDGES}
+      >
+        <Spot spot="climbing">
+          <path class="mg-lead" d={NARROW_ROPE} />
+          <Draw x={13} y={-96} scale={2.05} />
+          <Draw x={7} y={-42} scale={2.05} />
+          <Place x={20} y={-104} scale={2.05}>
+            <Hit x={-12} y={-30} width={24} height={32} />
+            <Climber />
+          </Place>
+        </Spot>
+      </Cliff>
+    </g>
+  </svg>
+</div>
+
+<style>
+  /* Spans the hero. `z-index: 1` puts the rock in front of the pass (z 0) and
+     level with the panorama — it is drawn after the panorama, so it paints over
+     the terrain, which is correct: the wall is the nearest thing in the frame.
+     The copy sits at z-index 2 and so still wins wherever the two meet. */
+  .mg-cliff-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .mg-cliff-layer__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .mg-cliff-layer__svg--narrow {
+    display: none;
+  }
+
+  /* Switched at the same breakpoint the panorama and the orbit band use. */
+  @media screen and (max-width: 47.99em) {
+    .mg-cliff-layer__svg--wide {
+      display: none;
+    }
+
+    .mg-cliff-layer__svg--narrow {
+      display: block;
+    }
+  }
+</style>

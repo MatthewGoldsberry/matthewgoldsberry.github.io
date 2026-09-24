@@ -1,0 +1,1122 @@
+/* ==========================================================================
+   Scene — landscape paint, figure paint, joint origins, poses, and motion.
+
+   This file is deliberately NOT expressed as utilities. Three reasons, all of
+   them structural rather than stylistic:
+
+     1. The figures are drawn by SVG macros (src/components/figures/) that are
+        instantiated at several scales in two compositions. A joint's rotation
+        origin is a property of the SKELETON, not of a placement, so it is
+        declared once here and holds for every instance.
+     2. `transform-origin` in local viewBox units, `offset-path`, and multi-stop
+        `@keyframes` have no utility form.
+     3. The static poses and the running animations are the same properties at
+        different times — a pose is the frame the animation resolves to when
+        `prefers-reduced-motion` is set. They have to live together to stay
+        legible as a pair.
+
+   Four rules govern everything below:
+
+   1. The scene must read as finished with ZERO motion. Every animation sits
+      behind prefers-reduced-motion, and each element's static pose is a
+      composed frame on its own. Static poses are declared in the base rules;
+      a running animation overrides them for as long as it runs.
+
+   2. Figures are jointed chains, not rigid sticks. Every figure is drawn from
+      one skeleton (see figures/README or the FigureSkeleton note in Limb.astro),
+      so the rotation origins below are declared once and hold for both
+      compositions — the narrow layout only scales its wrappers.
+
+   3. Everything that is not terrain — haze, rock shading, scrub, water edges —
+      is drawn in --mg-ink at low opacity, because ink inverts with the scheme
+      and so stays a highlight on the dark ground and a shadow on the light one.
+
+   4. SVG transform note: a CSS `transform` overrides an element's `transform`
+      ATTRIBUTE. Anything animated below is therefore a child of a plain
+      positioning <g transform="translate(…)">, never the positioned element
+      itself. The figure components enforce this by construction.
+
+   FIGURE SKELETON (local units, feet on the origin, side view facing +x):
+
+       ground   0        hip      -13.2      elbow  -16.8
+       ankle   -1.6      shoulder -21.6      wrist  -12.0
+       knee    -7.2      neck     -22.8      head c -24.8 (r 2.2)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Landscape paint
+
+   Three depth planes carry the land: far, mid, near. Air has weight — the
+   further a ridge is, the more sky sits between it and the viewer, so it loses
+   contrast toward the sky rather than staying a flat fill.
+   -------------------------------------------------------------------------- */
+
+/* The far range carries its aerial fade on the GROUP, so rock and snow lose
+   contrast into the sky together. Put it on the rock alone and the snow reads
+   as nearer than the mountain it is sitting on. */
+.mg-range { opacity: 0.82; }
+/* The nearer range sits a step forward: less air in front of it, so less fade. */
+.mg-range--b { opacity: 0.9; }
+.mg-range--b .mg-range__rock { fill: var(--mg-terrain-far-b); }
+.mg-range__rock { fill: var(--mg-terrain-far); }
+/* Snow at this distance is a pale shape, not a highlight: something you notice
+   on second look, after the figures and the pass. The weight is scheme-aware
+   (see the token) and compounds with the group's aerial fade above. */
+.mg-range__snow {
+  fill: var(--mg-snow);
+  opacity: var(--mg-snow-opacity);
+  /* Stroke painted under the fill, so only its outer half shows: a crisp
+     edge against the sky without eating into the cap. */
+  stroke: var(--mg-snow-edge);
+  stroke-width: 0.7;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+/* The second range: a nearer silhouette behind the tree line, and the plane
+   that turns one distant ridge into an actual recession of hills. */
+.mg-terrain-far-b { fill: var(--mg-terrain-far-b); opacity: 0.88; }
+/* The foothills. Rolling ground in front of two jagged ranges — the change of
+   SHAPE is doing as much of the recession here as the change of value, so if
+   this plane is ever re-authored keep it curves. Still carries a little aerial
+   fade; the two planes in front of it carry none. */
+.mg-terrain-hill { fill: var(--mg-terrain-hill); opacity: 0.92; }
+.mg-terrain-mid { fill: var(--mg-terrain-mid); opacity: 0.94; }
+.mg-terrain-near { fill: var(--mg-terrain-near); }
+/* Nearest plane of all. No aerial fade: there is no air between it and you. */
+.mg-terrain-fore { fill: var(--mg-terrain-fore); }
+
+/* Valley haze, pooling at the foot of each range. This is what separates one
+   ridge from the next: without it the planes read as flat cut-outs stacked on
+   each other, because nothing says there is air in between.
+
+   It has to be a GRADIENT, not a flat band. Haze is densest where it pools
+   against the ground and thins upward, and a rectangle of even sky-colour
+   across the middle of the scene does not read as air at all — it reads as a
+   pale stripe laid over the landscape, which is exactly what the first attempt
+   looked like. The colour lives on the stops so it follows the scheme. */
+.mg-haze stop { stop-color: var(--mg-sky-bottom); }
+.mg-horizon__svg--wide .mg-mist { fill: url(#mg-haze-h); }
+.mg-horizon__svg--narrow .mg-mist { fill: url(#mg-haze-n); }
+.mg-mist--b { opacity: 0.6; }
+
+/* Conifers stand on a ridge and are cut from the NEXT plane forward, so they
+   silhouette against whatever lies behind their ridge */
+.mg-tree { fill: var(--mg-terrain-near); }
+/* The line standing on the second range. Cut from the foothills rather than the
+   near ground, and faded, so it belongs to its own plane — a far tree line in
+   the near ground's value reads as trees standing in front of the hills. */
+.mg-tree--far { fill: var(--mg-terrain-hill); opacity: 0.75; }
+/* The line standing on the foothills: one plane nearer, so one value nearer and
+   less fade. Between them the three tree lines step forward in the same order
+   as the ground they stand on. */
+.mg-tree--hill { fill: var(--mg-terrain-mid); opacity: 0.88; }
+
+/* The wall is sandstone. Its face is a top-to-bottom gradient — lit where the
+   arete takes open sky, deep umber where the mass overhangs its own foot — with
+   the flat token behind it as the fallback fill. The gradient id is per
+   composition, exactly as the haze is, because both cliff SVGs are in the DOM
+   at once. */
+.mg-cliff-layer__svg--wide .mg-cliff-face { fill: url(#mg-cliff-lg-w) var(--mg-cliff); }
+.mg-cliff-layer__svg--narrow .mg-cliff-face { fill: url(#mg-cliff-lg-n) var(--mg-cliff); }
+
+/* Bedding planes. Sandstone is laid down in strata, and the roughly horizontal
+   banding — rough, dipping back into the rock, pinching out — is what reads as
+   THIS stone rather than as generic cliff. A third are marker beds carried
+   heavier; per-line opacity comes in inline off Cliff.astro so the banding does
+   not read as ruling. Clipped to the face by the group that wraps them. */
+.mg-cliff-bed {
+  fill: none;
+  stroke: var(--mg-cliff-band);
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.3;
+}
+.mg-cliff-bed--marker {
+  stroke-width: 3;
+}
+
+/* Erosion pockets — shallow scoops and honeycomb weathering. A soft dark fill,
+   the core-shadow colour; the ones cut by the clip at the lip read as pockets
+   opening at the edge of the rock. */
+.mg-cliff-pocket {
+  fill: var(--mg-cliff-core);
+  opacity: 0.2;
+}
+
+/* Desert varnish. On a real face it hangs in dark streaks off every lip and
+   ledge where water has run; here, a few soft warm columns down the lit wall.
+   Per-streak width comes in inline off Cliff.astro. */
+.mg-cliff-streak {
+  fill: none;
+  stroke: var(--mg-cliff-streak);
+  stroke-linecap: round;
+  opacity: 0.09;
+}
+
+/* Surface grain: an feTurbulence wash (coarse mottle times fine tooth), clipped
+   to the face in Cliff.astro. `overlay` so it pits the hollows and catches the
+   raised grain in either scheme; held light so the wall still reads as one mass
+   and not as noise. Filter id is per composition for the same reason the
+   gradient's is. */
+.mg-cliff-layer__svg--wide .mg-cliff-grain { filter: url(#mg-cliff-grain-w); }
+.mg-cliff-layer__svg--narrow .mg-cliff-grain { filter: url(#mg-cliff-grain-n); }
+.mg-cliff-grain {
+  mix-blend-mode: overlay;
+  opacity: 0.36;
+}
+
+.mg-crack {
+  fill: none;
+  stroke: var(--mg-cliff-line);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.3;
+}
+
+.mg-ledge {
+  fill: none;
+  stroke: var(--mg-cliff-line);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.32;
+}
+
+.mg-rock { fill: var(--mg-ink); opacity: 0.07; }
+
+/* Deep rock, back from the lip, sits in its own shadow — the one thing giving
+   the wall a lit face and a shadowed core rather than a single flat fill. Warm
+   now, and always darker than the face, so it never inverts into a highlight the
+   way an ink-based mark would on the dark scheme. */
+.mg-cliff-shade { fill: var(--mg-cliff-core); opacity: 0.5; }
+
+/* The overhanging arete. Two strokes: a firm warm contour that reads as the
+   rounded edge of the stone, and over it the scheme-inverting catch-light that
+   actually separates the wall from the sky — pale rim on the night sky, dark rim
+   on the day one. */
+.mg-lip-rim {
+  fill: none;
+  stroke: var(--mg-cliff-line);
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.35;
+}
+.mg-lip {
+  fill: none;
+  stroke: var(--mg-ink);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.22;
+}
+
+/* The worn patch a campsite sits on — barely there, just enough to say the
+   ground under the tent is trodden rather than open meadow */
+.mg-clearing { fill: var(--mg-ink); opacity: 0.035; }
+
+.mg-grass {
+  fill: none;
+  stroke: var(--mg-ink);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  opacity: 0.22;
+}
+
+/* --------------------------------------------------------------------------
+   The sky
+
+   One layer spanning the whole hero — see hero/Starfield.astro — carrying the
+   stars, the Milky Way and the moon. The two band SVGs draw none of it, so the
+   density is set in one place and does not step at the seam between them.
+
+   The whole night sky is switched off by day and the sun switched on in its
+   place. That is `display`, driven by the two tokens in global.css: stars in a
+   bright blue sky were the least believable thing in the hero, and there is no
+   weight at which they become right.
+   -------------------------------------------------------------------------- */
+
+.mg-starfield {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.mg-starfield__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mg-sky--night { display: var(--mg-sky-night); }
+
+/* Stars. `--mag` is the magnitude multiplier, on the element rather than baked
+   into the opacity, so the twinkle keyframes can carry it too — a bright star
+   has to stay the brighter one through the whole cycle. Declared on the base
+   class first; the two modifiers below have the same specificity and win on
+   source order. */
+.mg-star {
+  --mag: 1;
+  fill: var(--mg-ink);
+  opacity: calc(var(--mg-star-opacity) * var(--mag));
+}
+
+.mg-star--faint { --mag: 0.5; }
+.mg-star--bright { --mag: 1.75; }
+
+/* Night only, so a single value rather than a scheme pair. */
+:where(.mg-starfield) { --mg-star-opacity: 0.34; }
+
+/* The Milky Way.
+
+   The blur is the component, not a finish on it. The band is three hard-edged
+   diagonal strokes — a broad halo and two arms held apart around the Great Rift
+   — and blurring the group is what turns them into unresolved cloud. Doing it
+   with gradients instead would mean a fade perpendicular to a diagonal inside a
+   box whose aspect changes with the viewport, which is a geometry problem with
+   no fixed answer; a blur has no orientation and so has none of that trouble.
+
+   Sized in vw so the softness tracks the band's own width, which is also a
+   percentage. A fixed pixel blur reads as fog on a phone and as a hard stripe on
+   a wide monitor. */
+.mg-way {
+  filter: blur(clamp(10px, 2vw, 38px));
+  stroke: url(#mg-way-fade);
+  stroke-linecap: butt;
+}
+
+.mg-way-fade stop { stop-color: var(--mg-milkyway); }
+
+/* The halo is wide and barely there — it only has to stop the clumps floating
+   as separate smudges. The clumps carry their own width and weight from the
+   generator, which is the whole source of the band's unevenness. */
+.mg-way__halo { stroke-width: 20%; opacity: 0.05; }
+
+/* Thinned on a phone. The hero keeps most of its height there but loses two
+   thirds of its width, so the same count lands at several times the density and
+   reads as noise. Every second circle in each group goes; the generator emits
+   them in draw order, which is random in x, so this thins evenly rather than
+   opening a hole. */
+@media screen and (max-width: 47.99em) {
+  .mg-starfield__field circle:nth-of-type(2n),
+  .mg-starfield__way circle:nth-of-type(2n) {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   The moon, and the sun that replaces it by day. See hero/Celestial.astro.
+   -------------------------------------------------------------------------- */
+
+/* Placed here rather than in the SVG so a media query can move it: on a phone
+   the plate fills the upper left, and the only open sky left is the strip the
+   panorama keeps above its own skyline. */
+.mg-celestial {
+  position: absolute;
+  left: 13%;
+  top: 21%;
+  width: clamp(58px, 6.4vw, 104px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.mg-celestial__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.mg-moon { display: var(--mg-sky-night); }
+.mg-sun { display: var(--mg-sky-day); }
+
+.mg-moon__disc { fill: var(--mg-moon); opacity: 0.82; }
+.mg-moon__halo { fill: url(#mg-halo-moon); }
+.mg-halo-moon stop { stop-color: var(--mg-moon); }
+
+/* The maria are a wash over the disc, not a second colour on top of it: at 0.35
+   they darken the surface, and much past that they punch holes in it. */
+.mg-moon__mare { fill: var(--mg-moon-mare); opacity: 0.35; }
+
+/* The sun sits behind a pale sky rather than against black, so it needs less
+   weight than the moon and a wider, softer halo to separate from it at all. */
+.mg-sun__disc { fill: var(--mg-sun); opacity: 0.72; }
+.mg-sun__halo { fill: url(#mg-halo-sun); }
+.mg-halo-sun stop { stop-color: var(--mg-sun); }
+
+@media screen and (max-width: 47.99em) {
+  .mg-celestial {
+    left: 74%;
+    top: 79%;
+    width: clamp(44px, 12vw, 70px);
+  }
+}
+
+.mg-bird__mark {
+  fill: none;
+  stroke: var(--mg-ink);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  opacity: 0.3;
+}
+
+/* The water is OPAQUE — the ground does not show through it. What varies down
+   its length is only the last stretch: the channel's own fade gradient (axis
+   along the centre line, stops in Horizon.astro) carries the far end into the
+   hills so it dissolves rather than stopping at a visible point. The near and
+   middle of the river stay at full opacity. */
+.mg-river { fill: var(--mg-water); opacity: 1; }
+.mg-river-fade stop { stop-color: var(--mg-water); }
+.mg-horizon__svg--wide .mg-river { fill: url(#mg-river-h-fade); }
+.mg-horizon__svg--narrow .mg-river { fill: url(#mg-river-n-fade); }
+
+/* Earth at the water's edge: the far bank showing above the water (see
+   Horizon.astro). The near bank's own colour, pulled a step back by opacity so
+   it reads as a cut face rather than as more grass. */
+.mg-river-bank { fill: var(--mg-terrain-fore); opacity: 0.85; }
+
+/* The footpath. A worn track, not a drawn line: it is the SAME stroke colour at
+   every distance, and only the width and the opacity change, because that is
+   what distance does to a track. Drawn in three runs because a stroke has one
+   width for its whole length — see Horizon.astro.
+
+   Dashed rather than solid. A continuous stroke through open ground reads as a
+   road; broken, at this weight, it reads as ground worn thin by feet. The dash
+   pattern shortens with the runs so the breaks foreshorten too. */
+.mg-path {
+  fill: none;
+  stroke: var(--mg-terrain-fore);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mg-path--near { stroke-width: 2.6; stroke-dasharray: 7 3.5; opacity: 0.5; }
+.mg-path--mid { stroke-width: 1.8; stroke-dasharray: 5 3; opacity: 0.38; }
+/* By the far run the track is a hint on the hillside. Cut from the mid ground's
+   value, not the foreground's: this end of it is lying on the foothills. */
+.mg-path--far { stroke: var(--mg-terrain-near); stroke-width: 1.1; stroke-dasharray: 3.5 2.5; opacity: 0.3; }
+
+/* Surface glint — the sky caught on the water. Lighter than the water so it
+   reads on the now-opaque fill; dash lengths are baked into the path, not tiled
+   by stroke-dasharray, so the ripples foreshorten with the channel. Kept to the
+   near and middle of the river, where the water is at full opacity. */
+.mg-river__flow {
+  fill: none;
+  stroke: var(--mg-water-glint);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.mg-river__flow--b { opacity: 0.32; stroke-width: 0.75; }
+
+/* --------------------------------------------------------------------------
+   Figure paint
+   -------------------------------------------------------------------------- */
+
+.mg-limb {
+  fill: none;
+  stroke: var(--mg-accent);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Necks, shoulder and hip bars */
+.mg-limb--fine { stroke-width: 1.4; }
+
+/* A cap bill: short, forward only, and clear of the crown */
+.mg-brim {
+  fill: none;
+  stroke: var(--mg-accent);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+
+.mg-torso {
+  fill: none;
+  stroke: var(--mg-accent);
+  stroke-width: 2.3;
+  stroke-linecap: round;
+}
+
+.mg-head { fill: var(--mg-accent); }
+
+/* Contact shadow. Black rather than a terrain token, because it has to be
+   darker than whatever it lands on in BOTH schemes — a token that is near-black
+   at night is near-white by day and the shadow inverts into a highlight. Only
+   the opacity varies, which is what the token carries. */
+.mg-shadow {
+  fill: #000;
+  opacity: var(--mg-figure-shadow-opacity);
+}
+
+/* The limbs on the far side of the body, knocked back so the near ones read */
+.mg-part--far { opacity: 0.55; }
+
+.mg-pack {
+  fill: var(--mg-accent);
+  fill-opacity: 0.35;
+  stroke: var(--mg-accent);
+  stroke-width: 1;
+}
+
+/* Guy lines, pack straps */
+.mg-thread {
+  fill: none;
+  stroke: var(--mg-accent);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+
+/* The fly rod: a filled taper (see `taperedRod` in Angler.astro), not a stroke —
+   it runs continuously thick-to-thin the way a stroke width cannot. Reel and
+   guide take the ink value so they read as hardware against the accent-coloured
+   rod rather than more of the rod itself. */
+.mg-flyrod { fill: var(--mg-accent); }
+
+.mg-flyrod-guide {
+  fill: none;
+  stroke: var(--mg-ink);
+  stroke-width: 0.18;
+  opacity: 0.4;
+}
+
+.mg-reel {
+  fill: var(--mg-ink);
+  opacity: 0.5;
+}
+
+.mg-line {
+  fill: none;
+  stroke: var(--mg-accent);
+  stroke-width: 0.7;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+
+/* Casing. A doubled sub-pixel drop-shadow lays a ~1px outline around each whole
+   hero — limbs, torso, pack, hut, craft body and all — so the amber
+   separates from sky, haze, water and rock without a second colour on the marks
+   themselves. On the figure root, not on .mg-spot: the wrapper's hover states
+   own that element's `filter`, and this has to survive them. Name-tag riders
+   (.mg-sat--tag) are text and opt out. */
+.mg-climber,
+.mg-angler,
+.mg-camp,
+.mg-hiker,
+.mg-station,
+.mg-sat:not(.mg-sat--tag) {
+  filter:
+    drop-shadow(0 0 0.5px var(--mg-figure-edge))
+    drop-shadow(0 0 0.5px var(--mg-figure-edge))
+    drop-shadow(0 0 0.5px var(--mg-figure-edge));
+}
+
+/* Protection reads as hardware bolted to the rock, so it takes the ink value the
+   rest of the rock detail uses. The rope is the one accent thread on the wall —
+   that is what carries the eye down from the climber to the ground. */
+.mg-lead {
+  fill: none;
+  stroke: var(--mg-accent);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.mg-bolt { fill: var(--mg-ink); opacity: 0.4; }
+
+.mg-biner {
+  fill: none;
+  stroke: var(--mg-ink);
+  stroke-width: 0.4;
+  opacity: 0.5;
+}
+
+/* The one the rope runs through, so it reads as the load-bearing end */
+.mg-biner--rope { stroke-width: 0.5; opacity: 0.6; }
+
+.mg-sling {
+  fill: none;
+  stroke: var(--mg-ink);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  opacity: 0.45;
+}
+
+/* The climber's headlamp — night only, switched by --mg-sky-night the same way
+   the moon is. The beam is three nested cones sharing one apex on the lamp: a
+   wide dim penumbra, the beam proper, and a tight hot core, each capped with a
+   convex arc where it meets the face. The pool is that cap on the wall — an
+   ellipse raked along the beam axis. All of it is screen-blended, so it ADDS
+   light to the rock rather than painting a shape on it. In daylight the group is
+   display:none — no beam to explain against a lit wall. */
+.mg-headlamp {
+  display: var(--mg-sky-night);
+  mix-blend-mode: screen;
+}
+
+.mg-headlamp__cone { fill: #ffe6b8; }
+.mg-headlamp__cone--penumbra { opacity: 0.05; }
+.mg-headlamp__cone--beam { opacity: 0.1; }
+.mg-headlamp__cone--core { opacity: 0.17; }
+.mg-headlamp__pool { fill: #fff2d6; opacity: 0.22; }
+
+/* The lamp on the head. The housing is part of the climber's kit, so it shows in
+   both schemes; the warm lens and its glow come on only at night with the beam.
+   Drawn after the body (see Climber.astro) so nothing covers them. */
+.mg-headlamp__housing { fill: var(--mg-accent); opacity: 0.85; }
+
+.mg-headlamp__glow,
+.mg-headlamp__lens {
+  display: var(--mg-sky-night);
+}
+
+.mg-headlamp__glow { fill: #ffe6b8; opacity: 0.38; mix-blend-mode: screen; }
+.mg-headlamp__lens { fill: #fff6e6; opacity: 0.95; }
+
+/* Campsite ------------------------------------------------------------------
+   The tent is solid accent, like the station's shed — the two are the scene's
+   only built things, and a half-filled tent read as a smudge next to it. The
+   door takes the shed door's colour for the same reason. Wood and stones take the ink value the rest of the ground
+   detail uses — they are part of the site, not the figure. The flame is the
+   brightest mark in the group, with a pale core so it reads as fire and not
+   as another amber part of the camper. */
+.mg-camp__tent { fill-opacity: 1; stroke-linejoin: round; }
+/* The door face is turned away from the fire, so it takes a wash of black —
+   black rather than ink, which is near-white at night and would lighten the
+   face instead of shading it. It is also the only thing separating the two
+   faces, since fill and outline are the same accent. */
+.mg-camp__tent-shade { fill: #000; opacity: 0.18; }
+.mg-camp__guy { stroke-width: 0.5; opacity: 0.45; }
+.mg-camp__door { fill: light-dark(#7a4e0a, #05090f); }
+.mg-camp__log { fill: var(--mg-cliff-core); opacity: 0.9; }
+.mg-camp__beanie { fill: var(--mg-accent); }
+.mg-camp__stone { fill: var(--mg-ink); opacity: 0.3; }
+
+.mg-camp__wood {
+  fill: none;
+  stroke: var(--mg-cliff-core);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+
+.mg-camp__flame {
+  fill: var(--mg-accent);
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.mg-camp__flame-core { fill: #fff2d6; opacity: 0.9; }
+
+/* Firelight — night only, screen-blended, same as the climber's headlamp: it
+   adds light to the ground around the fire instead of painting a disc on it.
+   By day the sun is doing that job and the group is display:none. */
+.mg-camp__light {
+  display: var(--mg-sky-night);
+  mix-blend-mode: screen;
+  /* Three flat ellipses stack into visible rings; blurred, they fall off
+     smoothly. In the figure's own units, so it scales with the placement. */
+  filter: blur(2.5px);
+}
+
+.mg-camp__light ellipse { fill: #ffd9a0; }
+.mg-camp__light--wide { opacity: 0.05; }
+.mg-camp__light--mid { opacity: 0.09; }
+.mg-camp__light--core { opacity: 0.16; }
+
+/* The shed is filled, not outlined — the only solid mass among the figures, and
+   the reason the station reads as standing in front of the landscape */
+.mg-hut {
+  fill: var(--mg-accent);
+  stroke: var(--mg-accent);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+/* The eave is a fold in the wall, so it is cut from the fill in the sky colour —
+   no second hue, and at ground level a faint cool line reads as a shaded edge. */
+.mg-hut-eave {
+  fill: none;
+  stroke: var(--mg-sky-top);
+  stroke-width: 1.4;
+  opacity: 0.45;
+}
+
+/* The doorway is an OPENING into shadow, not a patch of sky: the shed sits at
+   ground level with warm terrain behind it, so painting it --mg-sky-top left a
+   cold pale-blue rectangle on the amber wall in light mode. It reads as a door
+   in both schemes only if it stays dark in both — a deep burnt amber by day, the
+   same near-black it already had by night. */
+.mg-hut-door { fill: light-dark(#7a4e0a, #05090f); stroke: none; }
+
+/* The whole station is drawn in the accent, not the satellite's blue: it stands
+   in the foreground, where the cooler signal colour reads as distance. What sells
+   the tracking is the sweep matching the pass, not a shared hue. */
+.mg-mast {
+  fill: none;
+  stroke: var(--mg-accent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mg-mast--fine { stroke-width: 1.1; opacity: 0.7; }
+
+/* Yagi elements: finer than the booms they hang off, so the array reads as a
+   spine carrying rungs rather than as a ladder */
+.mg-prong {
+  fill: none;
+  stroke: var(--mg-accent);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+
+.mg-sat__body { fill: var(--mg-accent); }
+
+/* Seams are what make the tall craft read as three cubes rather than a slab */
+.mg-sat__seam {
+  fill: none;
+  stroke: var(--mg-sky-top);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+/* Call signs. A clear step under the copy either side of the band, but readable
+   at a glance now: the text-accent value (AA on the light ground, bright on the
+   dark), carried near full strength, with the same casing the figures get so the
+   type holds its edge against the sky. */
+.mg-sat__tag {
+  fill: var(--mg-accent-text);
+  opacity: 0.82;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-anchor: end;
+  dominant-baseline: central;
+  filter:
+    drop-shadow(0 0 0.35px var(--mg-figure-edge))
+    drop-shadow(0 0 0.35px var(--mg-figure-edge));
+}
+
+/* The phone band is a third the width for the same length of name, so the type
+   comes down and the tracking closes up to keep it off both edges */
+.mg-orbit__svg--tall .mg-sat__tag {
+  font-size: 6.5px;
+  letter-spacing: 0.08em;
+}
+
+.mg-track {
+  fill: none;
+  stroke: var(--mg-signal);
+  stroke-width: 1;
+  stroke-dasharray: 2 7;
+  opacity: 0.45;
+}
+
+/* Wading ripple where the angler breaks the surface */
+.mg-wake {
+  fill: none;
+  stroke: var(--mg-accent);
+  stroke-width: 0.9;
+  opacity: 0.3;
+}
+
+/* The second, wider ring: the push of water around a standing wader. Fainter
+   and thinner than the first — one ring reads as a figure dropped onto the
+   water, two of unequal weight read as a figure standing in it. */
+.mg-wake--outer { stroke-width: 0.7; opacity: 0.16; }
+
+/* --------------------------------------------------------------------------
+   Joints — each origin is the point the group pivots about, in its own local
+   units. These mirror the skeleton documented at the top of this file; change
+   one there and you must change it here.
+   -------------------------------------------------------------------------- */
+
+.mg-leg               { transform-origin: 0px -13.2px; }    /* hip   */
+.mg-leg__shin         { transform-origin: 0px -7.2px; }     /* knee  */
+.mg-leg__foot         { transform-origin: 0px -1.6px; }     /* ankle */
+.mg-arm               { transform-origin: 0px -21.6px; }    /* shoulder */
+.mg-arm__fore         { transform-origin: 0px -16.8px; }    /* elbow */
+
+.mg-cl-leg            { transform-origin: 2.2px -13px; }
+.mg-cl-leg__shin      { transform-origin: 5.2px -7.4px; }
+.mg-cl-arm            { transform-origin: 3.2px -21.4px; }
+.mg-cl-arm__fore      { transform-origin: 7px -24.8px; }
+
+.mg-angler__arm       { transform-origin: 0px -21.6px; }
+.mg-angler__fore      { transform-origin: 3.6px -18.4px; }
+.mg-angler__rod       { transform-origin: 6.6px -16px; }    /* wrist */
+.mg-angler__hand      { transform-origin: 0px -21.6px; }
+.mg-angler__hand-fore { transform-origin: -2.8px -17.8px; }
+
+.mg-tuft              { transform-origin: 0px 0px; }
+.mg-bird__wings       { transform-origin: 0px 0px; }
+.mg-antenna           { transform-origin: 0px -38px; }      /* mast head */
+
+/* --------------------------------------------------------------------------
+   Static poses (no motion) — each is a composed frame in its own right
+   -------------------------------------------------------------------------- */
+
+/* `auto` turns each craft with the path instead of holding it upright, and the
+   craft are drawn with their long axis on local y — so what the tangent buys is
+   a body that stays square to the track and banks through the ends of the pass
+   rather than sliding along it like a decal. Both bodies are drawn about their
+   own centre, so the turn costs them no position on the path. */
+.mg-sat {
+  offset-rotate: auto;
+  offset-distance: 68%;
+}
+
+.mg-orbit__svg--wide .mg-sat { offset-path: path("M -20 66 C 260 10, 940 10, 1220 66"); }
+.mg-orbit__svg--tall .mg-sat { offset-path: path("M -10 76 C 90 12, 330 12, 430 76"); }
+
+/* The tower trails the cube down the same track, half a pass behind it — the
+   same spacing the two hold while they are moving, so the frozen frame is a
+   frame of the real pass rather than a different arrangement. */
+.mg-sat--b { offset-distance: 23%; }
+
+/* A call sign is its own rider on the path: same offset-path, same distance,
+   same animation and delay as the craft it names, because it carries the same
+   classes. All it overrides is the banking — a label that tipped with the hull
+   would be harder to read for nothing, and staying level is what makes it read
+   as an annotation on the pass rather than paint on the craft. Must stay after
+   the .mg-sat rule above: same specificity, so source order is what wins. */
+.mg-sat--tag { offset-rotate: 0deg; }
+
+/* Antenna parked on the true bearing to the resting satellite — the pose the
+   scene holds when motion is off. Same source as the sweep: computed at
+   runtime, with the last measured value as a fallback. */
+.mg-horizon__svg--wide .mg-antenna   { transform: rotate(var(--mg-track-parked, 29.5deg)); }
+.mg-horizon__svg--narrow .mg-antenna { transform: rotate(var(--mg-track-parked, 6.9deg)); }
+
+/* Hiker caught mid-stride: near leg forward and about to strike, far leg
+   trailing through toe-off, arms opposing */
+.mg-leg--near { transform: rotate(-18deg); }
+.mg-leg--near .mg-leg__shin { transform: rotate(8deg); }
+.mg-leg--near .mg-leg__foot { transform: rotate(-6deg); }
+.mg-leg--far  { transform: rotate(20deg); }
+.mg-leg--far .mg-leg__shin  { transform: rotate(28deg); }
+.mg-leg--far .mg-leg__foot  { transform: rotate(18deg); }
+.mg-arm--near { transform: rotate(16deg); }
+.mg-arm--near .mg-arm__fore { transform: rotate(-14deg); }
+.mg-arm--far  { transform: rotate(-18deg); }
+.mg-arm--far .mg-arm__fore  { transform: rotate(-28deg); }
+
+/* The climber is a fixed pose — an arete move, with side A on the face and side
+   B out over the edge:
+
+     A arm   pulling, elbow dropped below the hand
+     A leg   high step onto the face
+     B arm   high and near straight, fingers curled over the lip
+     B leg   flagged into space for balance — the reason a climber's outside leg
+             swings out on an arete, and the detail that reads as steep ground
+
+   The two arm angles are inverse kinematics on the elbow-down branch, so the
+   elbows sit under the hands rather than flaring above them. */
+.mg-cl-side--a .mg-cl-arm       { transform: rotate(66.5deg); }
+.mg-cl-side--a .mg-cl-arm__fore { transform: rotate(-69.3deg); }
+.mg-cl-side--a .mg-cl-leg       { transform: rotate(-50deg); }
+.mg-cl-side--a .mg-cl-leg__shin { transform: rotate(85deg); }
+.mg-cl-side--b .mg-cl-arm       { transform: rotate(9.2deg); }
+.mg-cl-side--b .mg-cl-arm__fore { transform: rotate(-10.4deg); }
+.mg-cl-side--b .mg-cl-leg       { transform: rotate(-30deg); }
+.mg-cl-side--b .mg-cl-leg__shin { transform: rotate(4deg); }
+
+/* Angler on the drift — the pose the cast returns to, and the only one in which
+   the rigid line reaches the water, so it is also the frozen frame. Fixed
+   values, not live animation — Angler.astro bakes the same 2deg/4deg into the
+   line's own coordinates rather than inheriting them, so keep these in sync if
+   they ever change (see `toBodyFrame` there). */
+.mg-angler__arm  { transform: rotate(0deg); }
+.mg-angler__fore { transform: rotate(2deg); }
+.mg-angler__rod  { transform: rotate(4deg); }
+.mg-angler__hand { transform: rotate(6deg); }
+.mg-angler__hand-fore { transform: rotate(-18deg); }
+
+/* --------------------------------------------------------------------------
+   Hover spots — each figure is a pointer target with a card behind it
+   -------------------------------------------------------------------------- */
+
+/* The scene as a whole stays transparent to the pointer; only the hit boxes take
+   it back. `visibleFill` is the exact keyword: it hit-tests the fill area even
+   though the fill is `none` (which the default `visiblePainted` would not), and
+   unlike `all` it still respects visibility — which is what lets a faded
+   satellite stop being a target. See the mg-orbit keyframes. */
+.mg-spot__hit {
+  fill: none;
+  pointer-events: visibleFill;
+}
+
+/* Only a spot with an `href` is clickable; SpotCards adds the class when it
+   binds the scene, so before hydration nothing promises a click. */
+.mg-spot--link .mg-spot__hit {
+  cursor: pointer;
+}
+
+/* Emphasis is subtraction: the other figures fall back and the one under the
+   cursor keeps its weight, rather than the active one flaring and shifting the
+   whole scene's brightness. The terrain is left alone — it is not competing. */
+.mg-spot {
+  transition: opacity 200ms var(--ease-mg);
+}
+
+/* The state lives on the frame, not the scene, because the pass is its own band
+   in the layout — hovering a satellite has to be able to dim a figure standing
+   on the ground two hundred pixels below it. */
+.mg-spotframe.is-showing .mg-spot { opacity: 0.22; }
+
+.mg-spotframe.is-showing .mg-spot.is-active {
+  opacity: 1;
+  filter: drop-shadow(0 0 7px var(--mg-accent-line));
+}
+
+/* A moving target is a bad target: the craft are small, they are crossing the
+   frame, and the antenna is aimed at them. Hovering any part of that system
+   holds all of it — craft and antenna together, so the aim stays true while the
+   card is open and the pass picks up where it left off. */
+.mg-spotframe.is-paused .mg-sat,
+.mg-spotframe.is-paused .mg-antenna { animation-play-state: paused; }
+
+/* The name riders dim with the craft they belong to. They are separate riders on
+   the same path, so they carry the key too and the script marks them alongside. */
+.mg-spotframe.is-showing .mg-sat--tag .mg-spot { opacity: 0.24; }
+.mg-spotframe.is-showing .mg-sat--tag .mg-spot.is-active { opacity: 1; filter: none; }
+
+/* --------------------------------------------------------------------------
+   Motion
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .mg-sat { animation: mg-orbit var(--mg-orbit-period, 42s) linear infinite; }
+
+  /* Exactly half a period. Two craft on one track are evenly spaced only at
+     50%, and any other value buys nothing: it crowds them together at one end
+     of the arc and leaves the other end thin. */
+  .mg-sat--b { animation-delay: calc(var(--mg-orbit-period, 42s) * -0.5); }
+
+  .mg-horizon__svg--wide .mg-antenna {
+    animation: mg-track-wide var(--mg-orbit-period, 42s) linear infinite;
+  }
+  .mg-horizon__svg--narrow .mg-antenna {
+    animation: mg-track-narrow var(--mg-orbit-period, 42s) linear infinite;
+  }
+
+  /* Five clocks, not three. At a handful of stars three was plenty; across a
+     field this size a shared period is visible as whole groups pulsing
+     together, and the primes-ish spread is what breaks that up. */
+  .mg-star--a { animation: mg-twinkle 6.5s ease-in-out infinite; }
+  .mg-star--b { animation: mg-twinkle 8.5s ease-in-out -3s infinite; }
+  .mg-star--c { animation: mg-twinkle 5.5s ease-in-out -1.5s infinite; }
+  .mg-star--d { animation: mg-twinkle 9.7s ease-in-out -6.2s infinite; }
+  .mg-star--e { animation: mg-twinkle 7.3s ease-in-out -4.4s infinite; }
+
+  .mg-horizon__svg--wide .mg-bird { animation: mg-glide-w 54s linear infinite; }
+  .mg-horizon__svg--narrow .mg-bird { animation: mg-glide-t 46s linear infinite; }
+  .mg-bird--2 { animation-duration: 68s; animation-delay: -24s; }
+  .mg-bird__wings { animation: mg-flap 0.9s ease-in-out infinite; }
+  .mg-bird--2 .mg-bird__wings { animation-duration: 1.15s; }
+
+  .mg-mist { animation: mg-drift 64s ease-in-out infinite alternate; }
+  .mg-mist--b { animation-duration: 47s; animation-direction: alternate-reverse; }
+
+  .mg-tuft { animation: mg-sway 6s ease-in-out infinite alternate; }
+  .mg-tuft:nth-of-type(even) { animation-duration: 7.6s; animation-delay: -2.4s; }
+
+  .mg-camp__flame { animation: mg-flicker 1.7s ease-in-out infinite alternate; }
+
+  /* "These can be hovered", said quietly and often. Every hoverable figure
+     gives a soft amber glow for about two seconds, then rests for
+     eight to eleven — each on its own cycle length and its own offset, so
+     they drift in and out of step and never pulse all at once, and at any
+     moment most of the scene is still. A persistent marker on each figure
+     (a beacon) read as clutter; a one-time intro was gone before anyone
+     looked. This sits between the two.
+
+     `filter` on the spot group is also what the hover emphasis sets, and a
+     running animation beats a static style — so the pulse stops while a card
+     is open, letting the active figure's highlight through, and starts again
+     on leaving. With reduced motion there is no pulse at all; the pointer
+     cursor over each figure is the cue. */
+  .mg-spot { animation: mg-spot-pulse 10s var(--ease-mg) infinite; }
+  .mg-spot[data-spot="cubesats"]   { animation-duration: 10.4s; animation-delay: 1.2s; }
+  .mg-spot[data-spot="leopardsat"] { animation-duration: 11.3s; animation-delay: 6.1s; }
+  .mg-spot[data-spot="fishing"]    { animation-duration: 9.6s;  animation-delay: 3.4s; }
+  .mg-spot[data-spot="camping"]    { animation-duration: 12.1s; animation-delay: 8.3s; }
+  .mg-spot[data-spot="habsat"]     { animation-duration: 10.9s; animation-delay: 4.7s; }
+  .mg-spot[data-spot="hiking"]     { animation-duration: 9.9s;  animation-delay: 9.6s; }
+  .mg-spot[data-spot="climbing"]   { animation-duration: 11.7s; animation-delay: 2.3s; }
+  .mg-spotframe.is-showing .mg-spot { animation: none; }
+
+  /* None of the four figures moves: each is one composed pose — the climber on a
+     fixed pitch with rope and protection where they belong, the camper leaning
+     in to the fire, the angler on the drift with the fly already down, the hiker
+     caught mid-stride. What still runs is the world around them: the pass, the
+     birds, the grass, the campfire. Every pose lives in the static block above, which is the only
+     place any of them is described. */
+}
+
+/* Sky ---------------------------------------------------------------------- */
+
+/* THE PASS ENDS AT THE CLIFF, NOT AT THE EDGE OF THE BOX.
+
+   The cliff layer spans the whole hero and leans out to the left as it rises,
+   so it crosses this band a little in from the right edge and paints over it —
+   a craft that keeps flying past that line is flying behind opaque rock. The
+   travel therefore stops where the rock starts: `--mg-pass-end` is the
+   offset-distance at which the leading edge of the craft is fully behind the
+   arete, computed per layout by PassGeometry.astro, which has to compute it
+   because the arete's position in this band moves with the hero's aspect ratio.
+   The fallback runs the craft off the end of the path, which is what it did
+   before the value existed.
+
+   Setting is therefore an occlusion, not a fade: the craft is already behind
+   the rock when the cycle cuts it, so the step from opacity 1 to 0 is not
+   visible. Rising is still a fade, because there is nothing on the left to hide
+   behind — the path only overshoots the box by 20 units, so a craft that waited
+   any longer would pop into open sky instead of appearing at the edge.
+
+   The remaining 8% is the dark gap, when the array slews back. It is short
+   because the two craft are half a period apart: each is visible for 90% of the
+   cycle, so the sky is never empty, and lengthening the gap is what would
+   empty it.
+
+   `visibility` rides along with the opacity because a transparent element is
+   still a pointer target: without it you can open a satellite's card by
+   sweeping over the empty sky where a faded craft happens to be. It is stepped
+   a hundredth of a percent early at each end on purpose — an interval with
+   `visible` at either end renders visible throughout, so the flip has to happen
+   between two hidden keyframes to take effect. */
+@keyframes mg-orbit {
+  0%     { offset-distance: 0%; opacity: 0; visibility: hidden; }
+  1.99%  { visibility: hidden; }
+  2%     { opacity: 1; visibility: visible; }
+  92%    { offset-distance: var(--mg-pass-end, 100%); opacity: 1; visibility: visible; }
+  92.01% { offset-distance: var(--mg-pass-end, 100%); opacity: 0; visibility: hidden; }
+  100%   { offset-distance: var(--mg-pass-end, 100%); opacity: 0; visibility: hidden; }
+}
+
+/* The array tracks LEOPARDSat-1 — the leading craft, not the trailing one.
+   Each stop is the bearing from the mast head to the craft's position at that
+   point in the pass.
+
+   THE VALUES ARE COMPUTED, NOT MEASURED. PassGeometry.astro works them out from
+   the real geometry and writes them into the custom properties below; the
+   numbers here are only fallbacks, used before that script runs and if it never
+   does. They are the last hand-measured set, which was accurate to about 1.5
+   degrees at one viewport and drifted either side of it.
+
+   That indirection is the point. These two bands are laid out independently, so
+   the bearing moves with viewport width, viewport height and the height of the
+   copy between them — no fixed set of numbers is right everywhere, and every
+   change to either band silently made the old set wronger. Re-laying the
+   panorama used to mean re-measuring nine angles by hand.
+
+   The station stands well to the left, so the craft rises just off the mast and
+   lies east by the time it sets: the arc is almost entirely positive rather than
+   symmetric about the vertical, and it flattens as the satellite runs out, which
+   is why the stops crowd together toward the end. The slew back to the horizon
+   happens between 92% and 100%, while the pass is dark.
+
+   The nine stops are spread evenly over the pass rather than over the cycle,
+   which is why they land on elevenths of 92 and not on round numbers. They are
+   named by index rather than by percentage because those percentages are no
+   longer integers and a custom property name cannot carry a dot. */
+@keyframes mg-track-wide {
+  0%     { transform: rotate(var(--mg-track-0, -21.1deg)); }
+  11.5%  { transform: rotate(var(--mg-track-1, 0deg)); }
+  23%    { transform: rotate(var(--mg-track-2, 19.7deg)); }
+  34.5%  { transform: rotate(var(--mg-track-3, 35.2deg)); }
+  46%    { transform: rotate(var(--mg-track-4, 46.5deg)); }
+  57.5%  { transform: rotate(var(--mg-track-5, 54.7deg)); }
+  69%    { transform: rotate(var(--mg-track-6, 60.8deg)); }
+  80.5%  { transform: rotate(var(--mg-track-7, 65.6deg)); }
+  92%    { transform: rotate(var(--mg-track-8, 69.8deg)); }
+  100%   { transform: rotate(var(--mg-track-0, -21.1deg)); }
+}
+
+/* The phone layout, driven by the same computed properties. Its fallbacks are
+   the old averaged set and are known to be stale — the tall orbit band was
+   deepened after they were taken, and no narrow viewport was available to
+   re-measure on. They no longer matter in practice: PassGeometry.astro computes
+   this layout too, and does it correctly at whatever size the phone actually is. */
+@keyframes mg-track-narrow {
+  0%     { transform: rotate(var(--mg-track-0, -5.7deg)); }
+  11.5%  { transform: rotate(var(--mg-track-1, -1.1deg)); }
+  23%    { transform: rotate(var(--mg-track-2, 3.6deg)); }
+  34.5%  { transform: rotate(var(--mg-track-3, 8.2deg)); }
+  46%    { transform: rotate(var(--mg-track-4, 12.7deg)); }
+  57.5%  { transform: rotate(var(--mg-track-5, 17.1deg)); }
+  69%    { transform: rotate(var(--mg-track-6, 21.5deg)); }
+  80.5%  { transform: rotate(var(--mg-track-7, 25.7deg)); }
+  92%    { transform: rotate(var(--mg-track-8, 30deg)); }
+  100%   { transform: rotate(var(--mg-track-0, -5.7deg)); }
+}
+
+/* Carries the star's own magnitude through the cycle. A fixed pair here would
+   flatten every star to one weight the moment it started twinkling, which threw
+   away the distribution the field is built on. */
+@keyframes mg-twinkle {
+  0%, 100% { opacity: calc(var(--mg-star-opacity) * var(--mag)); }
+  50%      { opacity: calc(var(--mg-star-opacity) * var(--mag) * 0.38); }
+}
+
+/* Birds cross the whole frame, wings beating on their own clock */
+@keyframes mg-glide-w {
+  0%   { transform: translate(-70px, 0); }
+  50%  { transform: translate(600px, -14px); }
+  100% { transform: translate(1270px, 4px); }
+}
+
+@keyframes mg-glide-t {
+  0%   { transform: translate(-50px, 0); }
+  50%  { transform: translate(210px, -12px); }
+  100% { transform: translate(470px, 4px); }
+}
+
+@keyframes mg-flap {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(0.35); }
+}
+
+@keyframes mg-drift {
+  from { transform: translateX(-14px); }
+  to   { transform: translateX(18px); }
+}
+
+/* The glow occupies the first ~18% of each cycle (~2s); the rest is rest.
+   A figure is itself amber, so an amber halo alone blends into its own edge
+   and the first version of this — the soft accent line only — was invisible
+   in use. The peak pairs a tight halo in the full accent with a wide soft one
+   and lifts the figure's brightness a touch, so the pulse reads as the figure
+   catching the light. */
+@keyframes mg-spot-pulse {
+  0%,
+  18%,
+  100% {
+    filter: none;
+  }
+  9% {
+    filter: brightness(1.12) drop-shadow(0 0 3px var(--mg-accent)) drop-shadow(0 0 10px var(--mg-accent-line));
+  }
+}
+
+/* Irregular on purpose: a flame that pulses on one even beat reads as a
+   warning light. Scaled from its base, so it never lifts off the logs. */
+@keyframes mg-flicker {
+  0%   { transform: scale(1, 1); }
+  30%  { transform: scale(0.94, 1.08); }
+  55%  { transform: scale(1.04, 0.93); }
+  80%  { transform: scale(0.97, 1.05); }
+  100% { transform: scale(1.02, 0.97); }
+}
+
+@keyframes mg-sway {
+  from { transform: rotate(-3deg); }
+  to   { transform: rotate(3.5deg); }
+}

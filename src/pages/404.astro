@@ -1,0 +1,29 @@
+---
+/**
+ * 404. Served from arbitrary URL depths, so every link here is absolute.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/ui/Button.astro";
+---
+
+<BaseLayout title="Signal lost" description="That page is not in orbit.">
+  <h1
+    class="m-0 font-display text-[clamp(2rem,1.4rem+2.4vw,3rem)] leading-tight font-semibold tracking-[-0.02em] text-ink"
+  >
+    Signal lost
+  </h1>
+
+  <p class="mt-3 max-w-measure text-[1.05rem] leading-relaxed text-ink-muted">
+    No telemetry from this URL. The page either moved, was renamed, or never made it into orbit.
+  </p>
+
+  <div class="my-8 flex flex-wrap gap-2">
+    <Button href="/" primary>Return to base</Button>
+    <Button href="/projects/">Browse projects</Button>
+  </div>
+
+  <pre
+    class="overflow-x-auto rounded-[--radius-md] border border-edge bg-bg-raised p-5 font-mono text-[0.8rem] leading-relaxed text-ink-muted"><code>GET  &lt;this page&gt;
+&gt;&gt;&gt;  404  NO CARRIER
+&gt;&gt;&gt;  last known good fix: /</code></pre>
+</BaseLayout>

@@ -1,0 +1,58 @@
+---
+/**
+ * The projects index — a manifest, not a gallery: every writeup as one row
+ * (`ProjectRow`, not the image-first `ProjectCard` the homepage's featured
+ * strip uses), sorted by `order`.
+ *
+ * The old build put a page listing down the left of these pages. There is
+ * nothing to navigate here beyond the list itself, so the list is the
+ * navigation. Wide and lightly padded rather than centered to a prose
+ * measure: two columns of image-and-blurb rows want real width to give each
+ * image room, and a narrow column just pushed that width into empty gutters
+ * either side. The header above it is a single instrument row rather than an
+ * intro paragraph — see the comment below.
+ */
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ProjectRow from "../../components/ui/ProjectRow.astro";
+
+const projects = (await getCollection("projects", (p) => !p.data.draft)).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<BaseLayout
+  title="Projects"
+  description="Interactive data visualization, reinforcement learning, and satellite flight software."
+  bare
+>
+  <div class="mx-auto w-full max-w-[90rem] px-4 py-14 sm:px-6">
+    {/* The title carries the same accent tick the plate's status line uses,
+        rather than an intro paragraph. */}
+    <div class="mb-6 border-b border-edge pb-3">
+      <h1 class="m-0 flex items-center gap-3 font-display text-[clamp(1.7rem,1.4rem+1.2vw,2.25rem)] leading-none font-semibold tracking-[-0.02em] text-ink">
+        <span class="block h-[0.6em] w-[3px] shrink-0 rounded-full bg-accent" aria-hidden="true" />
+        Projects
+      </h1>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {
+        projects.map((project) => (
+          <ProjectRow
+            href={`/projects/${project.id}/`}
+            title={project.data.title}
+            description={project.data.summary ?? project.data.description}
+            image={project.data.image}
+            imageAlt={project.data.imageAlt}
+            imageFit={project.data.imageFit}
+            tech={project.data.tech}
+            links={project.data.links}
+            status={project.data.status}
+            ongoing={project.data.ongoing}
+          />
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>

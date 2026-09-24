@@ -1,0 +1,25 @@
+---
+/**
+ * Protection — a bolt, its hanger biner, the sling, and the biner the rope runs
+ * through.
+ *
+ * The pitch is a fixed composition, so these are placed by hand on the rock
+ * rather than tiled: each one sits where a bolt would actually go, near the
+ * arete, spaced about three metres, wandering as a real line does. `scale`
+ * matches the climber's, so a draw stays the right size next to them.
+ */
+interface Props {
+  x: number;
+  y: number;
+  scale: number;
+}
+
+const { x, y, scale } = Astro.props;
+---
+
+<g class="mg-draw" transform={`translate(${x} ${y}) scale(${scale})`}>
+  <circle class="mg-bolt" cx="0" cy="0" r="0.85" />
+  <ellipse class="mg-biner" cx="0" cy="1.4" rx="0.6" ry="0.95" />
+  <path class="mg-sling" d="M 0 2.3 L 0 5.1" />
+  <ellipse class="mg-biner mg-biner--rope" cx="0" cy="6" rx="0.85" ry="1.35" />
+</g>

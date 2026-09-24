@@ -1,0 +1,328 @@
+---
+/**
+ * Landing hero.
+ *
+ * The hero's job is the first screen of a hiring read: who, what, where, whether
+ * he is available, and where to go next. It is exactly one screen — `min-height`
+ * rather than `height`, so a window too small for the copy grows and scrolls
+ * instead of clipping — and the proof strip below it should be breaking the
+ * fold, because the numbers are the argument.
+ *
+ * Four parts, in the order someone actually reads them:
+ *
+ *   stars     the field behind all of it, spanning the whole section — see
+ *             Starfield.astro. The two band SVGs draw none of their own.
+ *   orbit     the pass, full bleed. LEOPARDSat-1 and HABSat-1 are work, not
+ *             decoration, so they open the page — and hovering either one names it.
+ *   inner     identity on the left, the crew plate on the right.
+ *   standing  the three current affiliations, on one rule-divided line.
+ *   horizon   the panorama that closes the section: the whole cast on one band,
+ *             with the ground station's array tracking LEOPARDSat-1 as it crosses
+ *             the orbit strip at the top.
+ *
+ * `mg-spotframe` marks this as a hover-card frame. SpotCards scopes every lookup
+ * to a frame, which is what would keep a second band from reaching into this
+ * one; today the hero is the only frame there is.
+ */
+import { getCollection } from "astro:content";
+import { spotKey } from "../../content.config";
+import { hero, site } from "../../data/site";
+import Starfield from "./Starfield.astro";
+import OrbitBand from "./OrbitBand.astro";
+import Horizon from "./Horizon.astro";
+import CliffFace from "./CliffFace.astro";
+import PassGeometry from "./PassGeometry.astro";
+import Plate from "./Plate.astro";
+import SpotCards from "./SpotCards";
+import Button from "../ui/Button.astro";
+
+/* The scene's paint and motion. Global rather than scoped: it styles SVG that
+   lives inside the figure components, which scoping would not reach. */
+import "../../styles/scene.css";
+
+/* An entry's id is its spot key, and ids are not covered by a collection
+   schema — so it is checked here instead. `.parse` throws, which fails the
+   build and names the offending key, rather than shipping a figure that does
+   nothing when you hover it. That silent failure is what this replaces. */
+const spots = (await getCollection("spots")).map((entry) => ({
+  key: spotKey.parse(entry.id),
+  title: entry.data.title,
+  text: entry.data.text,
+  image: entry.data.image,
+  imageFit: entry.data.imageFit,
+  href: entry.data.href,
+}));
+---
+
+<section class="mg-hero mg-spotframe">
+  {/* First, and at the back: the field spans the whole section, and the pass
+      below shares its layer, so DOM order is what puts the track and the craft
+      in front of the stars rather than behind them. */}
+  <Starfield />
+
+  <OrbitBand />
+
+  <div class="mg-hero__inner">
+    <div class="mg-hero__identity">
+      <h1 class="mg-hero__name m-0 mb-[clamp(0.6rem,1.6vh,1rem)] font-display leading-[0.94] font-bold tracking-[-0.035em] text-ink">
+        {site.name}
+      </h1>
+
+      <p
+        class="m-0 mb-[clamp(0.6rem,1.4vh,1rem)] max-w-[60ch] text-[clamp(0.95rem,0.88rem+0.4vw,1.2rem)] leading-relaxed text-ink-muted"
+      >
+        {hero.lede}
+      </p>
+
+      <div class="flex flex-wrap gap-2">
+        {hero.actions.map((a) => <Button href={a.href} primary={"primary" in a && a.primary}>{a.label}</Button>)}
+      </div>
+    </div>
+
+    <Plate />
+  </div>
+
+  {/* Standing: employer, research, graduation. Above the fold because these are
+      what someone checks before they read anything else, and on one line because
+      each entry is three or four words. */}
+  <p class="mg-standing">
+    {hero.standing.map((item) => <span class="mg-standing__item">{item}</span>)}
+  </p>
+
+  <Horizon />
+
+  {/* Drawn after the panorama so the rock paints over the terrain — the wall
+      is the nearest thing in the frame. It spans the whole hero rather than
+      sitting inside the band, which is what lets it run to the top. */}
+  <CliffFace />
+
+  {/* Computes where the pass ends against the cliff, and the array's aim along
+      it, from the real geometry of the three layers — so re-laying any one of
+      them cannot silently break the tracking or leave the craft flying on
+      behind the rock. */}
+  <PassGeometry />
+
+  {/* The one island on the site. `client:idle` rather than `client:load`: the
+      cards are a hover affordance, so there is nothing to miss by waiting for
+      the main thread to go quiet, and it keeps hydration off the critical path. */}
+  <SpotCards spots={spots} client:idle />
+</section>
+
+<style>
+  .mg-hero {
+    /* The landing page is a flex column of header, hero, skills ticker and
+       footer pinned to one viewport height (see BaseLayout's `fitViewport`
+       and index.astro's wrapper), and the hero is the only flex-growing
+       member of it — `height: 100%` of whatever's left, not a fold computed
+       against the header alone. */
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    position: relative;
+    z-index: 3;
+    overflow: hidden;
+    isolation: isolate;
+    /* Ends on sky, not on the page ground: the panorama's terrain planes are
+       drawn to separate against --mg-sky-bottom, and against the page background
+       the nearest of them all but disappears. */
+    background: linear-gradient(
+      180deg,
+      var(--mg-sky-top) 0%,
+      var(--mg-sky-bottom) var(--mg-sky-horizon-at)
+    );
+    /* A crisp edge, flush with the ticker strip directly below — no stacked-
+       card lip. That shadow stack (solid offset "sheets" plus a soft cast
+       shadow) existed to bridge the hero's negative margin over the page
+       content that used to run beneath it; now something else always sits
+       immediately after the hero with no gap to bridge, so the stack just
+       bled onto it. */
+    border-bottom: 1px solid var(--color-edge-strong);
+  }
+
+  /* A hairline of haze along the very bottom — a few pixels only, so the near
+     terrain plane settles onto the card lip instead of ending on a raw pixel
+     cut, without softening the edge the way the old page-join fade did. The
+     colour is the sky's own, matching the valley haze; it reads as the last of
+     the aerial mist, not as a ramp to the page.
+
+     `z-index: 2` clears the panorama and the cliff (both z-index 1) and stays
+     under the hover-card layer (z-index 30). Static, so reduced-motion is a
+     no-op. */
+  .mg-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 8px;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--mg-sky-bottom) 0%, transparent),
+      color-mix(in srgb, var(--mg-sky-bottom) 55%, transparent)
+    );
+  }
+
+  /* Identity left, plate right. `auto` on the second track rather than a
+     fraction: the plate is sized by the photo inside it (see Plate.astro), so
+     the column is exactly as wide as the picture and the copy takes the rest.
+     That is also why the lede's measure is 60ch rather than a tighter one —
+     with the plate down to a single portrait, a narrower cap would leave the
+     freed width as a gap between the text and the photo.
+
+     `flex: 1 1 auto` with `align-content: center` takes the slack the panorama
+     could not, so a tall window opens up sky around the copy rather than leaving
+     a band of dead space under the landscape. */
+  /* The name is sized against ITS OWN COLUMN, not the viewport, which is what
+     keeps it on one line.
+
+     Measured rather than guessed: "Matthew Goldsberry" in the display face at
+     this weight and tracking is 8.21em wide, so it fits a column of width W at
+     any font size up to W/8.21 — that is 12.18% of the column. 11.8cqw leaves a
+     3% margin. A viewport-based size cannot do this: the column is the viewport
+     minus the plate, so every change to the plate silently re-breaks the line,
+     which is exactly what a 5vw size did at 1440px, overshooting 70.4px with
+     73.6px and wrapping the name onto two lines.
+
+     Container units need a container, which is the rule below. `inline-size`
+     only — `size` would need a definite height, and this box is content-sized.
+
+     The clamp floor keeps it readable if the column ever gets very narrow; at
+     2.2rem the name still needs only 289px, which every phone clears. */
+  .mg-hero__identity {
+    container-type: inline-size;
+  }
+
+  .mg-hero__name {
+    font-size: clamp(2.2rem, 11.8cqw, 4.6rem);
+    /* No `text-wrap: balance`: with one line it has nothing to balance, and it
+       would only reintroduce a break if the measurement above ever drifts. */
+    text-wrap: nowrap;
+  }
+
+  .mg-hero__inner {
+    flex: 1 1 auto;
+    align-content: center;
+    max-width: var(--container-page);
+    margin: 0 auto;
+    /* Tightened when the panorama grew to 260 units: the height it needed came
+       out of this block's spacing rather than out of the hero's one-screen
+       budget. */
+    padding: clamp(0.5rem, 1.8vh, 1.4rem) 1.2rem 0;
+    display: grid;
+    /* Copy and plate are one centred group rather than pinned to opposite
+       edges of the page: the copy's track is capped at 42rem (enough for the
+       name at full size and the lede's measure) and `justify-content` centres
+       both tracks together, so any spare width lands outside the pair instead
+       of opening a gulf between them. `minmax(0, …)` rather than `auto` because
+       the name is sized in container units against this column, which needs a
+       width that does not depend on its own content. */
+    grid-template-columns: minmax(0, 42rem) auto;
+    justify-content: center;
+    gap: clamp(1.5rem, 3.5vw, 2.75rem);
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+  }
+
+  /* One column below the width where a wrapped name and the plate stop fitting
+     side by side. The plate leads there: on a phone the photo is what the page
+     opens with, the way any profile does.
+
+     No `justify-items: start` on the container — that sizes every grid item to
+     max-content, which for the <h1> means the name stops wrapping and runs off
+     the side of a phone. Items stay stretched; only the plate is start-aligned,
+     and that override lives in Plate.astro's own sheet. */
+  @media screen and (max-width: 53em) {
+    .mg-hero__inner {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.75rem;
+    }
+
+    .mg-hero__identity {
+      order: 2;
+    }
+
+    :global(.mg-plate) {
+      order: 1;
+    }
+  }
+
+  /* Held to the same measure as the copy above it, and separated by a rule that
+     runs the full width of that measure: the rail is a footing under the whole
+     hero, not a fourth line of the identity block. */
+  .mg-standing {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: var(--container-page);
+    margin: clamp(0.5rem, 1.4vh, 0.9rem) auto 0;
+    padding: 0.55rem 1.2rem 0;
+    border-top: 1px solid var(--color-edge);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    /* Centred under the hero now that the hero itself is centred, rather than
+       hanging off the container's left edge where no copy starts any more. */
+    justify-content: center;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--color-ink-muted);
+    /* A halo in the page's own ground, so the line stays legible wherever the
+       station's mast lands behind it. Where it sits depends on the window's
+       height and the antenna swings through every pass, so no fixed offset
+       can keep the two apart; over open sky the halo matches what is already
+       there and disappears. */
+    text-shadow:
+      0 0 1px var(--color-bg),
+      0 0 2px var(--color-bg),
+      0 0 4px var(--color-bg),
+      0 0 6px var(--color-bg),
+      0 0 10px var(--color-bg),
+      0 0 14px var(--color-bg);
+    position: relative;
+    z-index: 2;
+  }
+
+  /* A hairline divides the entries rather than a glyph: the entries use middots
+     inside themselves, so a middot between them would not read as a boundary. */
+  .mg-standing__item + .mg-standing__item {
+    margin-left: 1.25rem;
+    padding-left: 1.25rem;
+    border-left: 1px solid var(--color-edge);
+  }
+
+  /* Stacked on a phone, where the line would otherwise wrap mid-entry and leave
+     a divider stranded at the start of a row. */
+  @media screen and (max-width: 44.9em) {
+    .mg-standing {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.1rem;
+      font-size: 0.72rem;
+      margin-top: 0.75rem;
+      padding-top: 0.5rem;
+    }
+
+    .mg-standing__item + .mg-standing__item {
+      margin-left: 0;
+      padding-left: 0;
+      border-left: 0;
+    }
+  }
+
+  /* Very short windows — a 720px laptop has only about 570px left once the
+     header is taken out. The panorama sizes itself from what is left, so all
+     this has to do is leave more of it: the pixels come out of the spacing. */
+  @media screen and (max-height: 46em) {
+    .mg-hero__inner {
+      padding-top: 0.6rem;
+    }
+
+    .mg-standing {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+    }
+  }
+</style>

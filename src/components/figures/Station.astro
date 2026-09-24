@@ -1,0 +1,42 @@
+---
+/**
+ * Ground station, drawn as a foreground vignette.
+ *
+ * The shed straddles the group origin so the wide frame can cut it in half at
+ * the left edge, and the mast rises off the shed's right corner. The array on
+ * top is a stacked pair of yagis — two parallel booms carrying perpendicular
+ * elements, long ahead of the pivot and stubbed behind it. Both booms are drawn
+ * pointing straight up, which is what lets the tracking keyframes in scene.css
+ * stay plain bearings from the pedestal to the satellite.
+ */
+---
+
+<g class="mg-station">
+  <ellipse class="mg-shadow" cx="0" cy="0" rx="26" ry="2.6" />
+
+  {/* Solid gable: the one filled shape in the scene, which is what makes it
+      read as the near thing rather than another line drawing on the horizon */}
+  <path class="mg-hut" d="M -20 0 L -20 -16 L 0 -28 L 20 -16 L 20 0 Z" />
+  <path class="mg-hut-eave" d="M -20 -16 L 20 -16" />
+  <path class="mg-hut-door" d="M 5 0 L 5 -11 L 12 -11 L 12 0 Z" />
+
+  <g transform="translate(20 0)">
+    <path class="mg-mast" d="M 0 0 L 0 -38" />
+    <path class="mg-mast mg-mast--fine" d="M -5 0 L 0 -9 L 5 0" />
+    <g class="mg-antenna">
+      {/* Stacking bracket, then the two booms it holds apart */}
+      <path class="mg-mast" d="M -7.5 -38 L 7.5 -38" />
+      <path class="mg-mast" d="M -7.5 -31 L -7.5 -62 M 7.5 -31 L 7.5 -62" />
+      {/* Elements: reflector at the back, directors shortening toward the tip */}
+      <path
+        class="mg-prong"
+        d="M -12.1 -34 L -2.9 -34 M 2.9 -34 L 12.1 -34
+           M -11.7 -41 L -3.3 -41 M 3.3 -41 L 11.7 -41
+           M -11.3 -46.5 L -3.7 -46.5 M 3.7 -46.5 L 11.3 -46.5
+           M -10.9 -51.5 L -4.1 -51.5 M 4.1 -51.5 L 10.9 -51.5
+           M -10.5 -56 L -4.5 -56 M 4.5 -56 L 10.5 -56
+           M -10.1 -60 L -4.9 -60 M 4.9 -60 L 10.1 -60"
+      />
+    </g>
+  </g>
+</g>

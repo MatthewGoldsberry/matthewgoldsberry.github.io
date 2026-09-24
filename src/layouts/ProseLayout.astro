@@ -1,0 +1,182 @@
+---
+/**
+ * The layout for anything whose body is rendered Markdown: project writeups and
+ * the standalone pages.
+ *
+ * The title comes from frontmatter rather than from an `# H1` in the body, so
+ * the heading outline has exactly one top-level entry and the same string feeds
+ * the <title>, the card, and the page. Writeups migrated from the old stack had
+ * their leading H1 stripped for that reason.
+ */
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  lede?: string | undefined;
+  /** Social preview image. Project pages pass their card image. */
+  image?: string | undefined;
+  /** Shown as a badge beside the title. */
+  status?: string | undefined;
+  /**
+   * Shown beside the title and lede, not just in `<meta>` tags. Most pages
+   * through this layout have no such image, so the header stays its usual
+   * single column unless this is set — a project writeup's `image` above is
+   * OG-only on purpose, so it never triggers this layout on its own.
+   */
+  heroImage?: string | undefined;
+  heroImageAlt?: string | undefined;
+  /**
+   * A single action button anchored inside the header's own reserved space
+   * (bottom-left, mirroring the image's top-right) rather than flowing after
+   * it in the body — a button in the body adds its own row height on top of
+   * `heroImage`'s, pushing whatever comes next down twice. Both required
+   * together; either alone renders nothing.
+   */
+  heroActionLabel?: string | undefined;
+  heroActionHref?: string | undefined;
+  /**
+   * Project writeups: one centred column that the title, text, figures and
+   * videos all share, like a rendered README — rather than the default of
+   * text held to a measure along the left edge. See `.prose-mg--doc`.
+   */
+  doc?: boolean | undefined;
+}
+
+const {
+  title,
+  description,
+  lede,
+  image,
+  status,
+  heroImage,
+  heroImageAlt,
+  heroActionLabel,
+  heroActionHref,
+  doc = false,
+} = Astro.props;
+const heroAction = heroActionLabel && heroActionHref;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  image={image ?? heroImage}
+>
+  <article class:list={["prose-mg", doc && "prose-mg--doc mx-auto max-w-doc"]}>
+    <header
+      class:list={[
+        "relative flex flex-wrap items-start justify-between gap-6",
+        /* A hero image anchors the header's visual weight lower than plain
+           title+lede does, so the content below it can follow closer behind
+           without reading as cramped — pages without one keep the wider gap.
+           `min-h-48` reserves the image's own height in normal flow even
+           though the (absolutely positioned) image itself doesn't — without
+           it, the line below would sit wherever the shorter text column
+           ends, cutting across the image instead of clearing it. Keep this
+           matched to the image's `max-h-48` below. A bare title with neither
+           a lede nor a status badge has nothing of its own to close off, so
+           it doesn't need as much air before what follows either. */
+        heroImage ? "mb-1 min-h-48" : lede || status ? "mb-8" : "mb-4",
+      ]}
+    >
+      <div class:list={["min-w-0 flex-1", heroImage && "sm:pr-48"]}>
+        {
+          status && (
+            <p class="m-0 mb-3 inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 font-mono text-label tracking-[0.08em] text-accent-text uppercase">
+              <span class="size-1.5 rounded-full bg-accent motion-safe:animate-blink" />
+              {status}
+            </p>
+          )
+        }
+
+        <h1 class="m-0">{title}</h1>
+
+        {
+          lede && (
+            <p class="mt-3 mb-0 max-w-measure text-[1.05rem] leading-relaxed text-ink-muted">
+              {lede}
+            </p>
+          )
+        }
+      </div>
+
+      {
+        heroImage && (
+          /* Absolutely positioned rather than a flex sibling: a flex row's
+             height is the tallest item regardless of `items-start`, so a
+             bigger image would otherwise push the button row (and everything
+             under it) down with it. Freed from that, its size is independent
+             of the text column — cleared instead by the header's `min-h-48`
+             above, so the line below lands under the image rather than
+             cutting across it. */
+          <img
+            src={heroImage}
+            alt={heroImageAlt ?? ""}
+            loading="lazy"
+            decoding="async"
+            class="absolute top-0 right-0 m-0 h-auto max-h-48 w-auto max-w-[13rem] rounded-[--radius-md] border border-edge object-contain p-3"
+          />
+        )
+      }
+
+      {
+        heroAction && (
+          /* Bottom-left of the same reserved box the image sits top-right
+             in, for the same reason the image is absolute: anchored here it
+             costs nothing in flow, so the line after this header sits right
+             under `min-h-48`'s edge instead of one more row-height below
+             it. */
+          <p class="mg-btn-row absolute bottom-0 left-0 m-0">
+            <a
+              class="mg-btn mg-btn--primary"
+              href={heroActionHref}
+              target="_blank"
+              rel="noopener"
+            >
+              {heroActionLabel}
+            </a>
+          </p>
+        )
+      }
+    </header>
+
+    <slot />
+  </article>
+</BaseLayout>
+
+<script>
+  /* Code-block copy buttons. The buttons themselves are static markup from
+     `rehype-code-frame` and ship `hidden`, so a page without this script (or
+     a browser without the Clipboard API) never shows one that can't work. */
+  const RESET_MS = 1800;
+
+  if (navigator.clipboard) {
+    for (const button of document.querySelectorAll<HTMLButtonElement>(".mg-code__copy")) {
+      button.hidden = false;
+    }
+
+    document.addEventListener("click", async (event) => {
+      const button = (event.target as Element | null)?.closest<HTMLButtonElement>(
+        ".mg-code__copy",
+      );
+      const code = button?.parentElement?.querySelector("pre");
+      if (!button || !code) return;
+
+      const status = button.querySelector(".mg-code__status");
+      try {
+        await navigator.clipboard.writeText(code.textContent ?? "");
+        button.dataset.state = "done";
+        if (status) status.textContent = "Copied";
+      } catch {
+        /* Permission refused. Select the text so a keyboard copy still works. */
+        getSelection()?.selectAllChildren(code);
+        if (status) status.textContent = "Selected";
+      }
+      window.setTimeout(() => {
+        delete button.dataset.state;
+        if (status) status.textContent = "";
+      }, RESET_MS);
+    });
+  }
+</script>

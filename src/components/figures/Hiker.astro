@@ -1,0 +1,26 @@
+---
+/** Hiker: leans into the grade, arms swinging opposite the legs. */
+import Leg from "./Leg.astro";
+import Arm from "./Arm.astro";
+---
+
+<g class="mg-hiker">
+  <ellipse class="mg-shadow" cx="1" cy="0" rx="5.5" ry="1.1" />
+  <g class="mg-hiker__lean" transform="rotate(4)">
+    <g class="mg-hiker__bob">
+      <Leg class="mg-leg--far mg-part--far" />
+      <Arm class="mg-arm--far mg-part--far" />
+      <path
+        class="mg-pack"
+        d="M -0.9 -20.9 L -3.3 -20.5 C -4.3 -20.3, -4.7 -19.5, -4.7 -18.4
+           L -4.7 -16.1 C -4.7 -15.1, -4.2 -14.6, -3.3 -14.7 L -0.9 -15 Z"
+      />
+      <path class="mg-thread" d="M -0.6 -20.6 C 0.3 -19.4, 0.4 -17.6, 0 -16.2" />
+      <path class="mg-torso" d="M 0 -13.2 C 0.7 -17, 0.5 -20, 0 -22.8" />
+      <circle class="mg-head" cx="0" cy="-24.8" r="1.9" />
+      <path class="mg-brim" d="M 0.4 -25.6 L 3.6 -26" />
+      <Leg class="mg-leg--near" />
+      <Arm class="mg-arm--near" />
+    </g>
+  </g>
+</g>

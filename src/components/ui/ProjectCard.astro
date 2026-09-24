@@ -1,0 +1,96 @@
+---
+/**
+ * A project card.
+ *
+ * The title's link is stretched across the whole card so the card is one hit
+ * area; the link row is lifted above it so those stay individually clickable.
+ * That pairing is the whole trick — without the z-index on the row, the stretched
+ * link swallows every "Live demo" click on the page.
+ */
+import Pills from "./Pills.astro";
+import StatusBadge from "./StatusBadge.astro";
+
+interface Props {
+  href: string;
+  title: string;
+  description: string;
+  image: string;
+  imageAlt: string;
+  imageFit?: "cover" | "contain";
+  tech?: readonly string[];
+  links?: readonly { label: string; href: string }[];
+  status?: string | undefined;
+  /** False renders `status` as settled rather than live — see the badge below. */
+  ongoing?: boolean;
+}
+
+const {
+  href,
+  title,
+  description,
+  image,
+  imageAlt,
+  imageFit = "cover",
+  tech = [],
+  links = [],
+  status,
+  ongoing = true,
+} = Astro.props;
+---
+
+<article
+  class="group relative flex flex-col overflow-hidden rounded-[20px] border border-edge-strong bg-surface shadow-[var(--mg-shadow-rest)] transition-[transform,border-color,box-shadow] duration-200 ease-mg hover:border-accent-line hover:shadow-[var(--mg-shadow)] motion-safe:hover:-translate-y-[3px]"
+>
+  {/* 4:3 rather than 16:9. The media is the card's first argument — a dashboard
+      screenshot has to be legible as a thumbnail. A square mission patch sets
+      `imageFit: "contain"` in frontmatter instead of filling this box, so its
+      emblem isn't cropped at the top and bottom. */}
+  <span class="block aspect-4/3 overflow-hidden border-b border-edge bg-bg-raised">
+    <img
+      src={image}
+      alt={imageAlt}
+      loading="lazy"
+      decoding="async"
+      class:list={[
+        "block h-full w-full transition-transform duration-400 ease-mg motion-safe:group-hover:scale-[1.03]",
+        imageFit === "contain" ? "object-contain p-3" : "object-cover object-top",
+      ]}
+    />
+  </span>
+
+  <div class="flex flex-1 flex-col gap-1.5 p-4">
+    {status && <StatusBadge status={status} ongoing={ongoing} />}
+
+    <h3 class="m-0 font-display text-[0.95rem] leading-tight font-semibold tracking-[-0.015em] text-ink">
+      {/* The stretched link. `after:absolute after:inset-0` is what makes the
+          whole card clickable without nesting interactive elements. */}
+      <a
+        href={href}
+        class="text-inherit no-underline after:absolute after:inset-0 after:z-[1] after:content-[''] group-hover:text-accent-text"
+      >
+        {title}
+      </a>
+    </h3>
+
+    <p class="m-0 flex-1 text-[0.75rem] leading-relaxed text-ink-muted">{description}</p>
+
+    {tech.length > 0 && <Pills items={tech} />}
+
+    {
+      links.length > 0 && (
+        <p class="relative z-[2] m-0 flex flex-wrap gap-4 pt-1.5 font-mono text-label tracking-[0.06em] uppercase">
+          {links.map((link) => (
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-accent-text underline decoration-accent-line underline-offset-[0.18em] hover:text-accent"
+            >
+              {link.label}
+            </a>
+          ))}
+        </p>
+      )
+    }
+  </div>
+</article>

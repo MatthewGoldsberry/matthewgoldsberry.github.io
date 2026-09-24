@@ -1,0 +1,43 @@
+---
+/**
+ * The résumé, embedded.
+ *
+ * The PDF is the artefact people actually want, so the download is the primary
+ * action and the viewer is the convenience. The embedded viewer does not work in
+ * every mobile browser, which is why the fallbacks are stated on the page rather
+ * than left to be discovered.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/ui/Button.astro";
+import { site } from "../data/site";
+---
+
+<BaseLayout
+  title="Résumé"
+  description="Résumé for Matthew Goldsberry — Computer Science BS/MS 2027, University of Cincinnati."
+>
+  <div class="mb-4 flex flex-wrap justify-end gap-2">
+    <Button href={site.resume} primary download small>Download PDF</Button>
+    <Button href={site.resume} external small>Open in new tab</Button>
+    <Button href="/experience/" small>Read as a page</Button>
+  </div>
+
+  {/* Full width, for reading and zooming into a section at real size — the
+      height then follows from the page's own 8.5:11 shape instead of a fixed
+      viewport fraction, so a full page at that width is exactly what fits,
+      with nothing cut off and nothing to scroll to see. */}
+  <iframe
+    class="aspect-[8.5/11] w-full rounded-[--radius-md] border border-edge bg-bg-raised"
+    src={`${site.resume}#toolbar=0&navpanes=0&view=Fit`}
+    title="Résumé for Matthew Goldsberry"></iframe>
+
+  <p class="mt-4 text-[0.8rem] text-ink-faint">
+    The embedded viewer does not work in every mobile browser. If the frame above is blank, use
+    <strong class="text-ink-muted">Download PDF</strong> or read the
+    <a
+      href="/experience/"
+      class="text-accent-text underline decoration-accent-line underline-offset-[0.18em] hover:text-accent"
+      >experience page</a
+    > instead.
+  </p>
+</BaseLayout>

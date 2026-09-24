@@ -1,0 +1,44 @@
+---
+/**
+ * A project writeup.
+ *
+ * One page per entry in the `projects` collection, prerendered at build time.
+ * Drafts are excluded from the route table entirely, so a draft is a 404 rather
+ * than an unlisted-but-reachable page.
+ */
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import ProseLayout from "../../layouts/ProseLayout.astro";
+import Button from "../../components/ui/Button.astro";
+
+/* Deliberately not annotated `: GetStaticPaths`. That annotation widens the
+   props back to `unknown` at the consumption site, so the entry is typed on
+   `Astro.props` instead and the collection's schema flows all the way through. */
+export async function getStaticPaths() {
+  const projects = await getCollection("projects", (p) => !p.data.draft);
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+interface Props {
+  project: CollectionEntry<"projects">;
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+---
+
+<ProseLayout
+  title={project.data.title}
+  description={project.data.description}
+  image={project.data.image}
+  status={project.data.status}
+  doc
+>
+  <Content />
+
+  <nav class="clear-both mt-16 border-t border-edge pt-8">
+    <Button href="/projects/">← All projects</Button>
+  </nav>
+</ProseLayout>

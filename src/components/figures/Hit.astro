@@ -1,0 +1,27 @@
+---
+/**
+ * The pointer target for a vignette.
+ *
+ * The figures are 1.9-unit strokes, and chasing a stick figure's forearm with a
+ * cursor is miserable, so every spot gets an invisible box in its own local
+ * units instead. `fill: none` still hit-tests because scene.css sets
+ * pointer-events to `visibleFill`.
+ *
+ * Size these by the target they make ON SCREEN, not by the figure's outline: a
+ * box is (w x h) x its group's scale x the viewBox-to-pixel ratio. The hiker is
+ * the small one, and drawn tight to the body it came out at a third the area of
+ * the next smallest spot — technically hoverable, practically a needle. Keep
+ * every spot in the same order of magnitude.
+
+ */
+interface Props {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+const { x, y, width, height } = Astro.props;
+---
+
+<rect class="mg-spot__hit" x={x} y={y} width={width} height={height} />

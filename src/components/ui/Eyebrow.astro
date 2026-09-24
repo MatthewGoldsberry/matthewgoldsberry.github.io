@@ -1,0 +1,25 @@
+---
+/**
+ * Section eyebrow: the recurring mono readout label, with a rule running out to
+ * the right edge. The rule is what makes a section boundary read as a boundary
+ * without spending a heading on it.
+ */
+interface Props {
+  /** Drops the top margin. The first eyebrow on a page has no section above it. */
+  flush?: boolean;
+  class?: string;
+}
+
+const { flush = false, class: className = "" } = Astro.props;
+---
+
+<p
+  class:list={[
+    "mg-eyebrow flex items-center gap-3 font-mono text-label tracking-[0.14em] text-ink-faint uppercase",
+    "mb-5 after:h-px after:flex-1 after:bg-edge after:content-['']",
+    flush ? "mt-0" : "mt-22",
+    className,
+  ]}
+>
+  <slot />
+</p>
