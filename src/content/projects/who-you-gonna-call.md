@@ -11,6 +11,7 @@ tech:
   - "JavaScript"
   - "Python"
   - "Pandas"
+  - "Data Viz"
 links:
   - label: "Live demo"
     href: "https://visual-disorder-in-cincinnati.vercel.app/"

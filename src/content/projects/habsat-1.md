@@ -7,7 +7,8 @@ imageAlt: "HABSat-1 mission patch"
 imageFit: "contain"
 tech:
   - "Flight software"
-  - "Architecture"
+  - "System Architecture"
+  - "Embedded C"
   - "OBC lead"
 links:
   - label: "Organization"
@@ -19,7 +20,7 @@ status: "In development"
 
 <div class="mg-project-header">
 <p class="mg-meta"><span><strong>Role</strong> OBC Team Lead</span> <span><strong>UC CubeCats</strong> Jan 2026 &ndash; present</span> <span><strong>University of Cincinnati</strong></span></p>
-<ul class="mg-pills"><li>Embedded C</li><li>Flight software</li><li>System architecture</li><li>Team lead</li></ul>
+<ul class="mg-pills"><li>Flight software</li><li>System architecture</li><li>Embedded C</li><li>OBC lead</li></ul>
 <p class="mg-btn-row"><a class="mg-btn mg-btn--primary" href="https://uccubecats.github.io/" target="_blank" rel="noopener">CubeCats website</a></p>
 </div>
 

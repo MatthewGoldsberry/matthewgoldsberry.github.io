@@ -10,6 +10,7 @@ tech:
   - "JavaScript"
   - "Python"
   - "Pandas"
+  - "Data Viz"
 links:
   - label: "Live demo"
     href: "https://how-basic-infrastructure-shapes-life-expectancy.vercel.app/"

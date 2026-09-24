@@ -19,7 +19,7 @@ status: "In orbit"
 
 <div class="mg-project-header">
 <p class="mg-meta"><span><strong>Role</strong> On-Board Computer team</span> <span><strong><a href="https://uccubecats.github.io/">UC CubeCats</a></strong></span> <span><strong>Status</strong> Currently in Orbit</span></p>
-<ul class="mg-pills"><li>Embedded C</li><li>Sensor drivers</li><li>Flight software</li><li>Testing</li></ul>
+<ul class="mg-pills"><li>Embedded C</li><li>Sensor drivers</li><li>Testing</li></ul>
 <p class="mg-btn-row"><a class="mg-btn mg-btn--primary" href="https://uccubecats.github.io/" target="_blank" rel="noopener">CubeCats website</a></p>
 </div>
 

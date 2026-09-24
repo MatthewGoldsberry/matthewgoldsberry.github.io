@@ -11,6 +11,7 @@ tech:
   - "Python"
   - "NLTK"
   - "BeautifulSoup"
+  - "Data Viz"
 links:
   - label: "Live demo"
     href: "https://the-fellowship-of-the-script.vercel.app/"

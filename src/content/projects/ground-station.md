@@ -20,7 +20,7 @@ status: "Live"
 
 <div class="mg-project-header">
 <p class="mg-meta"><span><strong>Role</strong> Ground segment software</span> <span><strong>UC CubeCats</strong> Aug 2024 &ndash; present</span> <span><strong>University of Cincinnati</strong></span></p>
-<ul class="mg-pills"><li>Python</li><li>Telemetry</li><li>Orbit prediction</li><li>Databases</li></ul>
+<ul class="mg-pills"><li>Radio Drivers</li><li>Telemetry</li><li>Orbit prediction</li><li>Database Design/Implementation</li><li>Python</li></ul>
 <p class="mg-btn-row"><a class="mg-btn mg-btn--primary" href="https://uccubecats.github.io/" target="_blank" rel="noopener">CubeCats website</a></p>
 </div>
 
