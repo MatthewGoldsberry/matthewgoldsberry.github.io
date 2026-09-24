@@ -89,6 +89,14 @@ const spots = (await getCollection("spots")).map((entry) => ({
     {hero.standing.map((item) => <span class="mg-standing__item">{item}</span>)}
   </p>
 
+  {/* Touch screens only. With a mouse, the pointer cursor over each figure
+      says it can be hovered; a finger gets no such cue, and the periodic glow
+      alone did not read as "tap me". */}
+  <p class="mg-hero__hint">
+    <span class="mg-hero__hint-dot" aria-hidden="true"></span>
+    Tap the figures in the scene to explore
+  </p>
+
   <Horizon />
 
   {/* Drawn after the panorama so the rock paints over the terrain — the wall
@@ -283,6 +291,40 @@ const spots = (await getCollection("spots")).map((entry) => ({
       0 0 14px var(--color-bg);
     position: relative;
     z-index: 2;
+  }
+
+  .mg-hero__hint {
+    display: none;
+  }
+
+  /* `hover: none` as well as a coarse pointer, so a touch laptop, which has a
+     trackpad too, keeps the mouse behaviour and never shows this. */
+  @media (hover: none) and (pointer: coarse) {
+    .mg-hero__hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      max-width: var(--container-page);
+      margin: 0.9rem auto 0;
+      padding: 0 1.2rem;
+      font-family: var(--font-mono);
+      font-size: var(--text-label);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-accent-text);
+      position: relative;
+      z-index: 2;
+    }
+
+    .mg-hero__hint-dot {
+      flex: 0 0 auto;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      box-shadow: 0 0 0 3px var(--color-accent-soft);
+    }
   }
 
   /* A hairline divides the entries rather than a glyph: the entries use middots

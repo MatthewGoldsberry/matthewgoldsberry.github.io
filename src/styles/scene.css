@@ -866,6 +866,22 @@
   cursor: pointer;
 }
 
+/* A finger is far blunter than a cursor. The hit boxes scale with the drawing,
+   so on a phone the camper, hiker and angler were only 20-30px wide, well under
+   the 44px a tap target should be. A transparent stroke pads each box by 12px
+   on every side. `non-scaling-stroke` makes that width screen pixels rather than
+   the figure's own units, so every figure gets the same margin whatever its
+   `Place` scale. `visible` rather than `visibleFill` so the stroke counts too;
+   it still respects `visibility`, which is what the fading satellite relies on. */
+@media (pointer: coarse) {
+  .mg-spot__hit {
+    stroke: transparent;
+    stroke-width: 24px;
+    vector-effect: non-scaling-stroke;
+    pointer-events: visible;
+  }
+}
+
 /* Emphasis is subtraction: the other figures fall back and the one under the
    cursor keeps its weight, rather than the active one flaring and shifting the
    whole scene's brightness. The terrain is left alone — it is not competing. */

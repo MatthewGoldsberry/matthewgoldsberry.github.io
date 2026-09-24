@@ -66,6 +66,13 @@ export default function SpotCards({ spots }: Props) {
   /** The element the open card is anchored to. Not state: it never renders. */
   const anchorRef = useRef<SVGGraphicsElement | null>(null);
 
+  /** Closes the open card. Shared by the scene's listeners and the card's own
+   *  close button, which only renders on touch screens. */
+  const dismiss = useCallback(() => {
+    anchorRef.current = null;
+    setActive(null);
+  }, []);
+
   /**
    * Places the open card against its figure.
    *
@@ -124,10 +131,7 @@ export default function SpotCards({ spots }: Props) {
       setActive(key);
     };
 
-    const close = () => {
-      anchorRef.current = null;
-      setActive(null);
-    };
+    const close = dismiss;
 
     const hrefs = new Map(spots.map((spot) => [spot.key, spot.href]));
     const cleanups: Array<() => void> = [];
@@ -148,24 +152,35 @@ export default function SpotCards({ spots }: Props) {
         else window.location.assign(href);
       };
 
+      /* What kind of pointer started the gesture. Read at pointerdown because
+         not every browser reports `pointerType` on the click that follows. */
+      let pointer = "mouse";
+
       const onEnter = (e: PointerEvent) => {
         if (e.pointerType === "mouse") open(figure);
       };
       const onLeave = (e: PointerEvent) => {
         if (e.pointerType === "mouse") close();
       };
-      /* Touch has no hover, so the first tap opens the card — you get to read
-         it before you are taken anywhere — and a second tap on the same figure
-         follows the link, or closes the card if there is none. */
       const onDown = (e: PointerEvent) => {
-        if (e.pointerType === "mouse") return;
-        if (anchorRef.current !== figure) open(figure);
+        pointer = e.pointerType;
+      };
+      /* With a mouse the card is already open from the hover, so a click goes.
+
+         Touch has no hover, so the first tap opens the card — you get to read
+         it before you are taken anywhere — and a second tap on the same figure
+         follows the link, or closes the card if there is none. The card also
+         carries its own buttons for both on a touch screen (see below).
+
+         This is on `click`, not `pointerdown`: the browser only fires a click
+         once it has decided the touch was a tap and not the start of a scroll,
+         and the landing page scrolls on a phone. Opening on pointerdown popped
+         a card whenever a scroll happened to start on a figure. */
+      const onClick = (e: MouseEvent) => {
+        if (pointer === "mouse") go(e);
+        else if (anchorRef.current !== figure) open(figure);
         else if (href) go(e);
         else close();
-      };
-      // With a mouse the card is already open from the hover, so a click goes.
-      const onClick = (e: PointerEvent) => {
-        if (e.pointerType === "mouse") go(e);
       };
 
       hit.addEventListener("pointerenter", onEnter);
@@ -186,13 +201,14 @@ export default function SpotCards({ spots }: Props) {
        card open at once. */
     const onDocDown = (e: PointerEvent) => {
       if (!(e.target instanceof Element)) return;
-      if (!e.target.closest(".mg-spot__hit")) close();
+      // A tap inside the open card is using it (its link or close button).
+      if (!e.target.closest(".mg-spot__hit, [data-card]")) close();
     };
     document.addEventListener("pointerdown", onDocDown);
     cleanups.push(() => document.removeEventListener("pointerdown", onDocDown));
 
     return () => cleanups.forEach((fn) => fn());
-  }, [spots]);
+  }, [spots, dismiss]);
 
   /* Reflect the open card back onto the scene: the hovered figure keeps its
      weight and everything else falls back. Emphasis is subtraction — the active
@@ -241,7 +257,6 @@ export default function SpotCards({ spots }: Props) {
     <div
       ref={layerRef}
       className="mg-spots pointer-events-none absolute inset-0 z-30 overflow-hidden"
-      aria-hidden="true"
     >
       {spots.map((spot) => {
         const isOpen = active === spot.key;
@@ -255,11 +270,15 @@ export default function SpotCards({ spots }: Props) {
             }}
             data-card={spot.key}
             data-open={isOpen ? "" : undefined}
-            /* Never takes the pointer: the card can then open directly under the
-               cursor without stealing the hover that opened it. `visibility`
-               rides the fade so a closed card is not a tab stop or a hit target. */
+            /* Never takes the mouse: the card can then open directly under the
+               cursor without stealing the hover that opened it. On a touch
+               screen there is no hover to steal, so an open card takes taps
+               there, which is what lets it carry its own link and close button.
+               `visibility` rides the fade so a closed card is not a tab stop or
+               a hit target either way. */
             className={[
               "absolute top-0 left-0 m-0 w-[min(19rem,68vw)] overflow-hidden p-0",
+              "pointer-coarse:data-open:pointer-events-auto",
               "rounded-[--radius-md] border border-accent-line bg-bg-raised",
               "shadow-[0_14px_34px_rgb(0_0_0/38%)]",
               "invisible translate-y-1.5 opacity-0",
@@ -268,6 +287,30 @@ export default function SpotCards({ spots }: Props) {
               "motion-reduce:translate-y-0 motion-reduce:duration-[1ms]",
             ].join(" ")}
           >
+            {/* Touch only. With a mouse, moving off the figure closes the card. */}
+            <button
+              type="button"
+              aria-label={`Close ${spot.title}`}
+              onClick={dismiss}
+              className={[
+                "absolute top-2 right-2 z-10 hidden size-9 items-center justify-center pointer-coarse:flex",
+                "rounded-full border border-edge-strong bg-bg-raised/85 text-ink backdrop-blur-sm",
+              ].join(" ")}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </button>
+
             {showImage ? (
               /* `contain`, not `cover`: a mission patch is a shield on a
                  transparent field, not a photo with margin to spare, and
@@ -322,13 +365,22 @@ export default function SpotCards({ spots }: Props) {
                 {spot.text}
               </p>
               {spot.href && (
-                <p className="m-0 mt-2.5 font-mono text-label tracking-[0.14em] text-accent-text uppercase">
-                  <span className="pointer-coarse:hidden">Click to open</span>
-                  <span className="hidden pointer-coarse:inline">
-                    Tap again to open
-                  </span>{" "}
-                  &rarr;
-                </p>
+                <>
+                  <p className="m-0 mt-2.5 font-mono text-label tracking-[0.14em] text-accent-text uppercase pointer-coarse:hidden">
+                    Click to open &rarr;
+                  </p>
+                  {/* A real link on a touch screen, rather than asking for a
+                      second tap on a figure the card may now be covering. */}
+                  <a
+                    href={spot.href}
+                    className={[
+                      "mt-3 hidden min-h-11 items-center gap-2 rounded-full border px-5 pointer-coarse:inline-flex",
+                      "border-accent bg-accent font-mono text-[0.72rem] font-semibold tracking-[0.06em] text-on-accent uppercase no-underline",
+                    ].join(" ")}
+                  >
+                    Open project &rarr;
+                  </a>
+                </>
               )}
             </figcaption>
           </figure>
