@@ -303,7 +303,7 @@ We would like to extend our appreciation to Dr. Aurisano for providing valuable 
 
 ### Matthew Goldsberry
 
-During the project, I leveraged Claude Code as an assistant. It primarily helped me accelerate the generation of some of the visual styling by writing CSS based on provided descriptions of vision and troubleshooting bugs that stumped me. I also leveraged it to help with some of hte logic required for aggregating data into the visualizations from the read in CSV data, such as with top phrases for each character. This allowed me to maintain a rapid development pace overall by dealing with these items that would normally be speed bumps.
+During the project, I leveraged Claude Code as an assistant. It primarily helped me accelerate the generation of some of the visual styling by writing CSS based on provided descriptions of vision and troubleshooting bugs that stumped me. I also leveraged it to help with some of the logic required for aggregating data into the visualizations from the read in CSV data, such as with top phrases for each character. This allowed me to maintain a rapid development pace overall by dealing with these items that would normally be speed bumps.
 
 Additionally, Gemini was used to construct some assets in the project. Specifically the character icons, favicon, and image in the repo where generated using Gemini Nano Banana. Then the character descriptions and scene summaries where originally generated via Gemini before being annotated by myself. This also served the purpose of rapidly getting this information in with the given time constraints.
 
