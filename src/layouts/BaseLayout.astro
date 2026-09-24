@@ -95,8 +95,15 @@ const ogImage = new URL(image, Astro.site ?? site.url);
       "bg-bg text-ink antialiased",
       /* Header, main and footer as one flex column pinned to exactly one
          screen, rather than the usual `min-h-svh` that lets the document grow
-         past it — that's what makes the page unscrollable. */
-      fitViewport ? "flex h-svh flex-col overflow-hidden" : "min-h-svh",
+         past it — that's what makes the page unscrollable.
+
+         From the scene's own 48em breakpoint up only. A phone cannot fit the
+         portrait, the copy, the actions and the panorama in one screen, and
+         pinning it there clipped the actions and squeezed the panorama out
+         entirely; below the breakpoint the page scrolls like any other. */
+      fitViewport
+        ? "min-h-svh md:flex md:h-svh md:flex-col md:overflow-hidden"
+        : "min-h-svh",
     ]}
   >
     <a
@@ -108,7 +115,7 @@ const ogImage = new URL(image, Astro.site ?? site.url);
 
     <Header />
 
-    <main id="main" class:list={{ "min-h-0 flex-1": fitViewport }}>
+    <main id="main" class:list={{ "md:min-h-0 md:flex-1": fitViewport }}>
       {
         bare ? (
           <slot />
