@@ -42,7 +42,7 @@ export type SpotKey =
   | "cubesats"
   | "climbing"
   | "fishing"
-  | "golf"
+  | "camping"
   | "hiking";
 
 /** Which side of the figure a card should open on. */

@@ -91,14 +91,14 @@ const items = skills.flatMap((group) => group.items);
     color: var(--color-edge-strong);
   }
 
+  /* Never pauses — not on hover either: it is a ribbon of names, not
+     something to stop and read one item of (the full list is in the
+     screen-reader line above and on the résumé). Reduced motion is the one
+     exception, as for every animation on the site: that is the reader asking
+     for no motion at all, not the ticker choosing to stop. */
   @media (prefers-reduced-motion: no-preference) {
     .mg-skillbar__track {
       animation: mg-skillbar-scroll 75s linear infinite;
-    }
-
-    /* A hover is a reader who stopped to look at one — let them. */
-    .mg-skillbar:hover .mg-skillbar__track {
-      animation-play-state: paused;
     }
   }
 

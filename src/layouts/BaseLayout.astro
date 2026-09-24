@@ -42,7 +42,10 @@ const ogImage = new URL(image, Astro.site ?? site.url);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="/favicon.png" />
+    {/* One file for every surface: a 512px PNG is large enough for an iOS
+        home-screen icon and every browser scales it down for a tab. */}
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <title>{pageTitle}</title>

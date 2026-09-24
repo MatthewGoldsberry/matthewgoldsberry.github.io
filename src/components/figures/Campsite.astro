@@ -1,0 +1,88 @@
+---
+/**
+ * Campsite: a tent, a fire, and a camper sitting on a log between them,
+ * leaning in toward the heat. One composed pose, like every other figure.
+ *
+ * Sized off the same skeleton as the rest. At 25.6 units to 70in, one unit is
+ * 2.73in, so: a log seat is ~16in, putting the hip at 6.5; a three-person
+ * tent stands ~52in at the ridge, or 19 units; and the camper sits a couple of
+ * feet back from the fire, which is about as close as anyone actually sits.
+ * Seated, the thigh and shin keep their skeleton lengths (6 and 5.6) — only
+ * the angles change — which is what keeps this the same-sized person as the
+ * hiker and the angler rather than a smaller one.
+ *
+ * The tent is drawn three-quarter on, not in the side view the camper is in.
+ * Side-on an A-frame is a bare triangle with nothing to say it is a tent, and
+ * face-on it is a flat one; turned, the front keeps the door (the detail
+ * that says "tent") while the side panel running back from the ridge gives
+ * it a body. The side panel runs back toward the fire, so it takes the
+ * light and the door face, turned away, falls into shade. The back edge
+ * recedes up and to the right — further away reads as higher on the ground
+ * plane here, the same cue the panorama uses.
+ *
+ * Firelight works like the climber's headlamp: night only, screen-blended so
+ * it ADDS light to the ground rather than painting a disc on it, and built
+ * from nested ellipses rather than a gradient, since a gradient needs an id
+ * and this figure is placed in both compositions on the same page.
+ */
+---
+
+<g class="mg-camp">
+  <g class="mg-camp__light" aria-hidden="true">
+    <ellipse class="mg-camp__light--wide" cx="14" cy="-4" rx="19" ry="11" />
+    <ellipse class="mg-camp__light--mid" cx="14" cy="-3" rx="11" ry="6.5" />
+    <ellipse class="mg-camp__light--core" cx="14" cy="-2.2" rx="5.5" ry="3" />
+  </g>
+
+  <ellipse class="mg-shadow" cx="0" cy="0" rx="7.5" ry="1.3" />
+  <ellipse class="mg-shadow" cx="-25" cy="-0.6" rx="20" ry="1.9" />
+
+  {/* Tent, three-quarter on, door facing left. Door face 19 wide at the
+      base with its ridge at (-33, -19); the rear ridge is 16 back toward the
+      fire and 2.5 up, which lands the back corner just clear of the log.
+      Guy lines first so the fly covers where they tie in. */}
+  <path class="mg-thread mg-camp__guy" d="M -12.5 -12.4 L -6 -0.4 M -38 -9 L -45.5 -0.3" />
+  {/* Side panel: front ridge, rear ridge, rear foot, front-right foot */}
+  <path class="mg-pack mg-camp__tent" d="M -33 -19 L -17 -21.5 L -7.5 -2.5 L -23.5 0 Z" />
+  <path class="mg-pack mg-camp__tent" d="M -23.5 0 L -33 -19 L -42.5 0 Z" />
+  <path class="mg-camp__tent-shade" d="M -23.5 0 L -33 -19 L -42.5 0 Z" />
+  <path class="mg-camp__door" d="M -33 -12.5 L -28.7 0 L -37.3 0 Z" />
+  {/* Pole tips standing proud of the ridge at both ends, the rear pair
+      knocked back like any far part */}
+  <path class="mg-thread mg-part--far" d="M -15.8 -23.3 L -17 -21.5 L -18.2 -23.3" />
+  <path class="mg-thread" d="M -31.8 -20.8 L -33 -19 L -34.2 -20.8" />
+
+  {/* Log seat, lengthwise under the camper */}
+  <rect class="mg-camp__log" x="-5" y="-5.4" width="9" height="5.4" rx="2.7" />
+
+  {/* Camper. Far limbs first, knocked back, same as every figure. */}
+  <path class="mg-limb mg-part--far" d="M -0.4 -6.6 L 5.4 -7.9 L 5.4 -1.6 L 7.4 -0.7" />
+  <path class="mg-limb mg-part--far" d="M 1.4 -14.6 L 4.6 -11.3 L 9.2 -12.4" />
+
+  {/* Spine leaning in toward the fire, forearms out over it */}
+  <path class="mg-torso" d="M 0 -6.5 C 0.4 -10, 1 -13, 2 -15.9" />
+  <circle class="mg-head" cx="2.8" cy="-17.9" r="1.9" />
+  {/* Beanie: a cap brim would be wrong at night by a fire */}
+  <path class="mg-camp__beanie" d="M 0.9 -18.3 C 1 -20.6, 4.4 -21, 4.8 -18.6 Z" />
+
+  <path class="mg-limb" d="M 0 -6.5 L 6 -7.2 L 6.3 -1.6 L 8.3 -0.6" />
+  <path class="mg-limb" d="M 1.8 -14.7 L 5.3 -11.4 L 9.8 -12.6" />
+
+  {/* Fire: two crossed logs, a ring of stones, and the flame over them. The
+      inner flame is its own element so the flicker can run on the outer one
+      without the core swimming around inside it. */}
+  <ellipse class="mg-camp__stone" cx="10.4" cy="-0.5" rx="1.3" ry="0.8" />
+  <ellipse class="mg-camp__stone" cx="17.6" cy="-0.5" rx="1.3" ry="0.8" />
+  <path class="mg-camp__wood" d="M 11 -0.4 L 17 -2.4 M 17 -0.4 L 11 -2.4" />
+  <path
+    class="mg-camp__flame"
+    d="M 14 -1.4 C 11.2 -1.6, 11 -4.2, 12.6 -6 C 12.8 -4.8, 13.4 -4.4, 13.8 -4.6
+       C 13.2 -6.6, 14.4 -8.4, 15.4 -9 C 15 -7.4, 17.2 -6, 16.8 -3.6
+       C 16.6 -2, 15.4 -1.4, 14 -1.4 Z"
+  />
+  <path
+    class="mg-camp__flame-core"
+    d="M 14 -1.8 C 12.9 -1.9, 12.8 -3.4, 13.6 -4.4 C 13.8 -3.6, 14.3 -3.4, 14.6 -3.6
+       C 14.5 -4.6, 15 -5.2, 15.4 -5.4 C 15.8 -4, 15.9 -2, 14 -1.8 Z"
+  />
+</g>

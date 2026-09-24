@@ -1,22 +1,16 @@
 ---
-/**
- * A two-segment arm chain: upper arm, then forearm, optionally carrying a
- * trekking pole from the grip.
- */
+/** A two-segment arm chain: upper arm, then forearm. */
 interface Props {
   /** Side and depth classes, e.g. "mg-arm--far mg-part--far". */
   class?: string;
-  /** Hang a pole off the grip. The hiker takes one in each hand. */
-  pole?: boolean;
 }
 
-const { class: className = "", pole = false } = Astro.props;
+const { class: className = "" } = Astro.props;
 ---
 
 <g class={`mg-arm ${className}`.trim()}>
   <path class="mg-limb" d="M 0 -21.6 L 0 -16.8" />
   <g class="mg-arm__fore">
     <path class="mg-limb" d="M 0 -16.8 L 0 -12" />
-    {pole && <g class="mg-pole"><path class="mg-thread" d="M 0 -12.4 L 1.6 1" /></g>}
   </g>
 </g>

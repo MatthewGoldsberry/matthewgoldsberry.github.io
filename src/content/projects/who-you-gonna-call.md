@@ -1,8 +1,8 @@
 ---
 title: "Who You Gonna Call? 3-1-1!"
 description: "Cincinnati's 2025 311 service requests, narrowed from 381 service types to the six that mean visual disorder."
-summary: "381 kinds of Cincinnati 311 request, narrowed to the six that mean visual disorder, on a map and a timeline that filter each other — so one neighborhood's problem stops being averaged away by the city's."
-image: "/assets/media/who-you-gonna-call/app.png"
+summary: "381 kinds of Cincinnati 311 request, narrowed to the six that represent visual disorder, on a map and a timeline that filter each other — so one neighborhood's problem stops being averaged away by the city's."
+image: "/assets/media/projects/who-you-gonna-call/app.png"
 imageAlt: "Visual Disorder in Cincinnati dashboard"
 imageFit: "contain"
 tech:
@@ -16,14 +16,14 @@ links:
     href: "https://visual-disorder-in-cincinnati.vercel.app/"
   - label: "Source"
     href: "https://github.com/MatthewGoldsberry/Who-you-gonna-call"
-order: 2
+order: 4
 featured: true
 status: "Live"
 ---
 
 <div class="mg-project-header">
-<p class="mg-meta"><span><strong>Role</strong> Developer &amp; designer</span> <span><strong>Team</strong> With <a href="https://github.com/isaac-dowdy">Isaac Dowdy</a></span> <span><strong>Course project</strong></span></p>
-<ul class="mg-pills"><li>D3.js</li><li>Leaflet</li><li>JavaScript</li><li>Python</li><li>Pandas</li></ul>
+<p class="mg-meta"><span><span><strong>Completed With </strong><a href="https://github.com/isaac-dowdy">Isaac Dowdy</a></span> <span><strong>Course project</strong></span></p>
+<ul class="mg-pills"><li>D3.js</li><li>Leaflet</li><li>JavaScript</li><li>Python</li><li>Pandas</li><li>Data Visualization</li><li>Web Design</li></ul>
 <p class="mg-btn-row"><a class="mg-btn mg-btn--primary" href="https://visual-disorder-in-cincinnati.vercel.app/" target="_blank" rel="noopener">Live application</a> <a class="mg-btn" href="https://github.com/MatthewGoldsberry/Who-you-gonna-call" target="_blank" rel="noopener">Source</a> <a class="mg-btn" href="#video-demonstration">Demo video</a></p>
 </div>
 
@@ -37,7 +37,7 @@ This project is an interactive data visualization designed to help users explore
 ## Video Demonstration
 
 <figure>
-  <video controls loop muted playsinline width="700">
+  <video controls loop muted playsinline>
     <source src="https://github.com/MatthewGoldsberry/portfolio/releases/download/v0.0.2/WhoYouGonnaCall_VideoDemo.mp4" type="video/mp4"> 
     Your browser does not support the video tag.
   </video>
@@ -82,13 +82,13 @@ With these constraints in mind, we developed two early sketches to layout potent
 
 #### Approach 1: Dual Chart Columns
 
-![Approach 1 Sketch](/assets/media/who-you-gonna-call/sketch_1.png)
+![Approach 1 Sketch](/assets/media/projects/who-you-gonna-call/sketch_1.png)
 
 This approach surrounds the central Leaflet map with visualizations, dividing the bar charts across both the left and right margins. While this approach maximizes the total screen area dedicated to the charts, it crows the center and constrains the map's overall width.
 
 #### Approach 2: Single Chart Column
 
-![Approach 2 Sketch](/assets/media/who-you-gonna-call/sketch_2.png)
+![Approach 2 Sketch](/assets/media/projects/who-you-gonna-call/sketch_2.png)
 
 This approach consolidates all 5 bar charts into a single column on the right. This dedicates a much larger block of space for the Leaflet map and a little larger space for the timeline tool at the bottom. *(Note: This sketch also includes an early annotation exploring the possibility of utilizing the bottom-left quadrant for chart overflow).*
 
@@ -145,45 +145,45 @@ Now lets look at the color encoding strategy for each data variable:
 
 ## Visual Components & Interactions
 
-![Full Dashboard](/assets/media/who-you-gonna-call/app.png)
+![Full Dashboard](/assets/media/projects/who-you-gonna-call/app.png)
 
 The dashboard application contains seven different visualizations: the map view, five bar graphs, and a timeline. The map shows the City of Cincinnati with the service requests geographically visualized. The five bar graphs show number of service requests by neighborhood, request submission methods (Internet, 311 Call, etc.), number of service requests by public agency, service requests by priority level, and requests by service type (Trash, Tires, Graffiti, Dumping, Littering, and Vacant). View an image of the full dashboard application above.
 
 ### The Leaflet Map
 
-![The Leaflet Map](/assets/media/who-you-gonna-call/map.png)
+![The Leaflet Map](/assets/media/projects/who-you-gonna-call/map.png)
 
 **What this shows:** Map of the City of Cincinnati with the service requests geographically visualized.
 
 **Interactions:** Users can hover over a point on the map for a tooltip that shows the request type, description, agency, and timing information as well as highlight that data in the other visualizations (as seen in first image below). Clicking on one of these points will persist the selection and highlight the other visualizations even as the user's cursor moves away from that point. The map includes various options to change the color of the nodes, the map background, which service types are shown and their colors (as seen in second image below), a heatmap mode, and a brush mode. The brush allows the user to select a subset of nodes, with the other visualizations updating to show the selected data. The Heatmap shows the same data visualized on the map in a different way, so it also works with the brushing and the linked interactions from the other graphs. (as seen in the last two images below)
 
-![Tooltip on Hover](/assets/media/who-you-gonna-call/leaflet-node-tooltip.png)
-![Service Type Color/Selection Edits](/assets/media/who-you-gonna-call/service-type-editing.png)
-![Brushing on Map](/assets/media/who-you-gonna-call/map-brushing.png)
-![Brushing on Heatmap](/assets/media/who-you-gonna-call/heatmap-brushed.png)
+![Tooltip on Hover](/assets/media/projects/who-you-gonna-call/leaflet-node-tooltip.png)
+![Service Type Color/Selection Edits](/assets/media/projects/who-you-gonna-call/service-type-editing.png)
+![Brushing on Map](/assets/media/projects/who-you-gonna-call/map-brushing.png)
+![Brushing on Heatmap](/assets/media/projects/who-you-gonna-call/heatmap-brushed.png)
 
 ### Bar Charts
 
-![Bar Charts](/assets/media/who-you-gonna-call/barcharts.png)
+![Bar Charts](/assets/media/projects/who-you-gonna-call/barcharts.png)
 
 **What it shows:** The distribution of number of service requests by neighborhood, request submission methods (Internet, 311 Call, etc.), number of service requests by public agency, service requests by priority level, and requests by service type (Trash, Tires, Graffiti, Dumping, Littering, and Vacant).
 
 **Interactions:** Users can hover over a bin to show a tooltip and temporarily highlight all data contained in that bin in all seven visualizations (shown in the first picture below). Clicking a bin persists this focus, allowing users to isolate specific range groups. Similarly, you can also deselect specific bins to refine the focus. The second image below shows an example of this, filtering down to all the Trash and Dumping requests made by 311 call in Price Hill. Each bar graph also has a drop down menu allowing the user to select how the y axis is distributed (linear, log, square root). The bar graphs also have a button in the top left of their windows that switches their view to the map's default position to allow the user to see a bigger picture (as seen in the last image).
 
-![Selecting a Bin from the Bar Chart](/assets/media/who-you-gonna-call/interactions.png)
-![Selecting Multiple Bins](/assets/media/who-you-gonna-call/bar-chart-interactions.png)
-![Enlarged Bar Chart](/assets/media/who-you-gonna-call/enlarged-bar-chart.png)
+![Selecting a Bin from the Bar Chart](/assets/media/projects/who-you-gonna-call/interactions.png)
+![Selecting Multiple Bins](/assets/media/projects/who-you-gonna-call/bar-chart-interactions.png)
+![Enlarged Bar Chart](/assets/media/projects/who-you-gonna-call/enlarged-bar-chart.png)
 
 ### Timeline
 
-![Timeline](/assets/media/who-you-gonna-call/timeline.png)
+![Timeline](/assets/media/projects/who-you-gonna-call/timeline.png)
 
 **What it shows:** A timeline of service requests binned by week.
 
 **Interactions:** Supports hovering to show a tooltip and click-to-select different weeks (shown in the first picture), highlighting this data in the other visualizations. The timeline also includes a brush (shown in the second picture), using the same scale as the timeline but referencing the non-binned data to allow users to brush over days rather than weeks. On a brush, the other visualizations highlight the selected data and a helpful tooltip appears beneath the timeline to show the range of dates selected.
 
-![Timeline Interactions](/assets/media/who-you-gonna-call/timeline-interactions.png)
-![Timeline Brush](/assets/media/who-you-gonna-call/july-graffiti.png)
+![Timeline Interactions](/assets/media/projects/who-you-gonna-call/timeline-interactions.png)
+![Timeline Brush](/assets/media/projects/who-you-gonna-call/july-graffiti.png)
 
 ### The Reset Selection Button
 
@@ -197,7 +197,7 @@ The following case studies demonstrate how the dashboard’s interactive feature
 
 By selecting the Graffiti bar chart, there are a couple of neighborhoods that can be seen that struggle with consistent grafitti: Northside, CUF, the West End, the East End, and Over-the-Rhine. The graffiti nodes are very densely packed in these areas and sparse everywhere else. Understandably, brushing over the timeline during the warmer months vs the colder months shows us that the vast majority of graffiti service requests come during May-October. This information would give the City of Cincinnati times and locations to focus on.
 
-![Summer Graffiti Hotspots](/assets/media/who-you-gonna-call/graffiti-hotspots.png)
+![Summer Graffiti Hotspots](/assets/media/projects/who-you-gonna-call/graffiti-hotspots.png)
 
 ### Finding 2: Modern Technology
 
@@ -205,19 +205,19 @@ Now more than ever, modern technology is giving us new ways to approach and solv
 
 Looking at how these are distrubuted on the map, more urban areas specifically, like downtown, are relying more on the internet, with almost no 311 calls coming from this part of Cincinnati. More people, especially in the city, are relying more on the internet to submit requests, and the Cincinnati government website seems very user-friendly, easy to understand, and well built. They even have a mobile app! I think they should advertise this more, and continue leaning into the use of technology like this, especially because this is the first I've heard of online 311 submissions.
 
-![Modern Technology](/assets/media/who-you-gonna-call/service-call-methods.png)
+![Modern Technology](/assets/media/projects/who-you-gonna-call/service-call-methods.png)
 
 ### Finding 3: The Trash Problem in CUF
 
 There are a lot of requests on the map, and things get quite tightly packed, especially just south-west of the University of Cincinnati in CUF. In fact, there is a very large clump of light blue, trash service requests, in the residential areas where a lot of UC upperclassmen live. Most of these are improper trash set-out requests. The timeline shows that these requests are super concentrated in July and August, right around the time that move-in and move-out happens for the new academic year. I think these might be related, and could be helpful information for the City of Cincinnati to know to find ways to deal with this end of summer trash problem.
 
-![CUF Trash](/assets/media/who-you-gonna-call/CUF-trash.png)
+![CUF Trash](/assets/media/projects/who-you-gonna-call/CUF-trash.png)
 
 ### Finding 4: Looking at the Red
 
 The heatmap view is very helpful for drawing conclusions based on the density of service requests, especially because it can be hard to see how many requests there are on the map when viewing them all at once - they sit on top of each other and the map becomes a mess of colored nodes. But the heatmap shows color based on the density of requests. Glancing at the heatmap, I see the darker red/orange areas in CUF (already discussed above), Price Hill, Over-the-Rhine, Bond Hill, and Avondale. Most of these areas are known for being poorly taken care of in parts, and could benefit from increased focus from the city.
 
-![Concentrations on the Heatmap](/assets/media/who-you-gonna-call/heatmap.png)
+![Concentrations on the Heatmap](/assets/media/projects/who-you-gonna-call/heatmap.png)
 
 ## Technical Implementation
 

@@ -34,10 +34,11 @@ const { Content } = await render(project);
   description={project.data.description}
   image={project.data.image}
   status={project.data.status}
+  doc
 >
   <Content />
 
-  <nav class="mt-16 border-t border-edge pt-8">
+  <nav class="clear-both mt-16 border-t border-edge pt-8">
     <Button href="/projects/">← All projects</Button>
   </nav>
 </ProseLayout>

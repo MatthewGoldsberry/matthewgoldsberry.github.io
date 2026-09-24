@@ -62,7 +62,16 @@
 /* Snow at this distance is a pale shape, not a highlight: something you notice
    on second look, after the figures and the pass. The weight is scheme-aware
    (see the token) and compounds with the group's aerial fade above. */
-.mg-range__snow { fill: var(--mg-snow); opacity: var(--mg-snow-opacity); }
+.mg-range__snow {
+  fill: var(--mg-snow);
+  opacity: var(--mg-snow-opacity);
+  /* Stroke painted under the fill, so only its outer half shows: a crisp
+     edge against the sky without eating into the cap. */
+  stroke: var(--mg-snow-edge);
+  stroke-width: 0.7;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
 /* The second range: a nearer silhouette behind the tree line, and the plane
    that turns one distant ridge into an actual recession of hills. */
 .mg-terrain-far-b { fill: var(--mg-terrain-far-b); opacity: 0.88; }
@@ -203,7 +212,9 @@
   opacity: 0.22;
 }
 
-.mg-green { fill: var(--mg-ink); opacity: 0.035; }
+/* The worn patch a campsite sits on — barely there, just enough to say the
+   ground under the tent is trodden rather than open meadow */
+.mg-clearing { fill: var(--mg-ink); opacity: 0.035; }
 
 .mg-grass {
   fill: none;
@@ -362,6 +373,11 @@
 .mg-horizon__svg--wide .mg-river { fill: url(#mg-river-h-fade); }
 .mg-horizon__svg--narrow .mg-river { fill: url(#mg-river-n-fade); }
 
+/* Earth at the water's edge: the far bank showing above the water (see
+   Horizon.astro). The near bank's own colour, pulled a step back by opacity so
+   it reads as a cut face rather than as more grass. */
+.mg-river-bank { fill: var(--mg-terrain-fore); opacity: 0.85; }
+
 /* The footpath. A worn track, not a drawn line: it is the SAME stroke colour at
    every distance, and only the width and the opacity change, because that is
    what distance does to a track. Drawn in three runs because a stroke has one
@@ -448,7 +464,7 @@
   stroke-width: 1;
 }
 
-/* Poles, flagstick */
+/* Guy lines, pack straps */
 .mg-thread {
   fill: none;
   stroke: var(--mg-accent);
@@ -456,22 +472,6 @@
   stroke-linecap: round;
   opacity: 0.75;
 }
-
-/* Golf club shaft and head. The fishing rod has its own paint below — a stroke
-   of fixed width cannot taper, which a rod's continuous run from grip to tip
-   needs and a golf shaft does not. */
-.mg-rod {
-  fill: none;
-  stroke: var(--mg-accent);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-}
-
-.mg-rod--shaft { stroke-width: 1.2; }
-.mg-rod--head  { stroke-width: 2.4; stroke-linecap: butt; }
-/* A driver head carries mass a putter's does not — that weight at the end of a
-   long shaft is most of what tells the two clubs apart at this size */
-.mg-rod--driver { stroke-width: 2.8; stroke-linecap: round; }
 
 /* The fly rod: a filled taper (see `taperedRod` in Angler.astro), not a stroke —
    it runs continuously thick-to-thin the way a stroke width cannot. Reel and
@@ -499,17 +499,15 @@
   opacity: 0.5;
 }
 
-.mg-flag { fill: var(--mg-accent); }
-
 /* Casing. A doubled sub-pixel drop-shadow lays a ~1px outline around each whole
-   hero — limbs, torso, poles, pack, hut, craft body and all — so the amber
+   hero — limbs, torso, pack, hut, craft body and all — so the amber
    separates from sky, haze, water and rock without a second colour on the marks
    themselves. On the figure root, not on .mg-spot: the wrapper's hover states
    own that element's `filter`, and this has to survive them. Name-tag riders
    (.mg-sat--tag) are text and opt out. */
 .mg-climber,
 .mg-angler,
-.mg-golfer,
+.mg-camp,
 .mg-hiker,
 .mg-station,
 .mg-sat:not(.mg-sat--tag) {
@@ -550,8 +548,6 @@
   opacity: 0.45;
 }
 
-.mg-ball { fill: var(--mg-ink); }
-
 /* The climber's headlamp — night only, switched by --mg-sky-night the same way
    the moon is. The beam is three nested cones sharing one apex on the lamp: a
    wide dim penumbra, the beam proper, and a tight hot core, each capped with a
@@ -583,11 +579,55 @@
 .mg-headlamp__glow { fill: #ffe6b8; opacity: 0.38; mix-blend-mode: screen; }
 .mg-headlamp__lens { fill: #fff6e6; opacity: 0.95; }
 
-.mg-cup { fill: var(--mg-sky-top); stroke: var(--mg-accent); stroke-width: 1.2; }
+/* Campsite ------------------------------------------------------------------
+   The tent is solid accent, like the station's shed — the two are the scene's
+   only built things, and a half-filled tent read as a smudge next to it. The
+   door takes the shed door's colour for the same reason. Wood and stones take the ink value the rest of the ground
+   detail uses — they are part of the site, not the figure. The flame is the
+   brightest mark in the group, with a pale core so it reads as fire and not
+   as another amber part of the camper. */
+.mg-camp__tent { fill-opacity: 1; stroke-linejoin: round; }
+/* The door face is turned away from the fire, so it takes a wash of black —
+   black rather than ink, which is near-white at night and would lighten the
+   face instead of shading it. It is also the only thing separating the two
+   faces, since fill and outline are the same accent. */
+.mg-camp__tent-shade { fill: #000; opacity: 0.18; }
+.mg-camp__guy { stroke-width: 0.5; opacity: 0.45; }
+.mg-camp__door { fill: light-dark(#7a4e0a, #05090f); }
+.mg-camp__log { fill: var(--mg-cliff-core); opacity: 0.9; }
+.mg-camp__beanie { fill: var(--mg-accent); }
+.mg-camp__stone { fill: var(--mg-ink); opacity: 0.3; }
 
-/* The tee: thinner than the thread it shares a class with, and dimmer, so the
-   ball still reads as the thing sitting on top of it */
-.mg-tee { stroke-width: 1; opacity: 0.55; }
+.mg-camp__wood {
+  fill: none;
+  stroke: var(--mg-cliff-core);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+
+.mg-camp__flame {
+  fill: var(--mg-accent);
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.mg-camp__flame-core { fill: #fff2d6; opacity: 0.9; }
+
+/* Firelight — night only, screen-blended, same as the climber's headlamp: it
+   adds light to the ground around the fire instead of painting a disc on it.
+   By day the sun is doing that job and the group is display:none. */
+.mg-camp__light {
+  display: var(--mg-sky-night);
+  mix-blend-mode: screen;
+  /* Three flat ellipses stack into visible rings; blurred, they fall off
+     smoothly. In the figure's own units, so it scales with the placement. */
+  filter: blur(2.5px);
+}
+
+.mg-camp__light ellipse { fill: #ffd9a0; }
+.mg-camp__light--wide { opacity: 0.05; }
+.mg-camp__light--mid { opacity: 0.09; }
+.mg-camp__light--core { opacity: 0.16; }
 
 /* The shed is filled, not outlined — the only solid mass among the figures, and
    the reason the station reads as standing in front of the landscape */
@@ -703,7 +743,6 @@
 .mg-leg__foot         { transform-origin: 0px -1.6px; }     /* ankle */
 .mg-arm               { transform-origin: 0px -21.6px; }    /* shoulder */
 .mg-arm__fore         { transform-origin: 0px -16.8px; }    /* elbow */
-.mg-pole              { transform-origin: 0px -12.4px; }    /* grip */
 
 .mg-cl-leg            { transform-origin: 2.2px -13px; }
 .mg-cl-leg__shin      { transform-origin: 5.2px -7.4px; }
@@ -768,8 +807,6 @@
 .mg-arm--near .mg-arm__fore { transform: rotate(-14deg); }
 .mg-arm--far  { transform: rotate(-18deg); }
 .mg-arm--far .mg-arm__fore  { transform: rotate(-28deg); }
-.mg-arm--near .mg-pole { transform: rotate(0deg); }
-.mg-arm--far .mg-pole  { transform: rotate(38deg); }
 
 /* The climber is a fixed pose — an arete move, with side A on the face and side
    B out over the edge:
@@ -814,6 +851,11 @@
 .mg-spot__hit {
   fill: none;
   pointer-events: visibleFill;
+}
+
+/* Only a spot with an `href` is clickable; SpotCards adds the class when it
+   binds the scene, so before hydration nothing promises a click. */
+.mg-spot--link .mg-spot__hit {
   cursor: pointer;
 }
 
@@ -886,11 +928,36 @@
   .mg-tuft { animation: mg-sway 6s ease-in-out infinite alternate; }
   .mg-tuft:nth-of-type(even) { animation-duration: 7.6s; animation-delay: -2.4s; }
 
+  .mg-camp__flame { animation: mg-flicker 1.7s ease-in-out infinite alternate; }
+
+  /* "These can be hovered", said quietly and often. Every hoverable figure
+     gives a soft amber glow for about two seconds, then rests for
+     eight to eleven — each on its own cycle length and its own offset, so
+     they drift in and out of step and never pulse all at once, and at any
+     moment most of the scene is still. A persistent marker on each figure
+     (a beacon) read as clutter; a one-time intro was gone before anyone
+     looked. This sits between the two.
+
+     `filter` on the spot group is also what the hover emphasis sets, and a
+     running animation beats a static style — so the pulse stops while a card
+     is open, letting the active figure's highlight through, and starts again
+     on leaving. With reduced motion there is no pulse at all; the pointer
+     cursor over each figure is the cue. */
+  .mg-spot { animation: mg-spot-pulse 10s var(--ease-mg) infinite; }
+  .mg-spot[data-spot="cubesats"]   { animation-duration: 10.4s; animation-delay: 1.2s; }
+  .mg-spot[data-spot="leopardsat"] { animation-duration: 11.3s; animation-delay: 6.1s; }
+  .mg-spot[data-spot="fishing"]    { animation-duration: 9.6s;  animation-delay: 3.4s; }
+  .mg-spot[data-spot="camping"]    { animation-duration: 12.1s; animation-delay: 8.3s; }
+  .mg-spot[data-spot="habsat"]     { animation-duration: 10.9s; animation-delay: 4.7s; }
+  .mg-spot[data-spot="hiking"]     { animation-duration: 9.9s;  animation-delay: 9.6s; }
+  .mg-spot[data-spot="climbing"]   { animation-duration: 11.7s; animation-delay: 2.3s; }
+  .mg-spotframe.is-showing .mg-spot { animation: none; }
+
   /* None of the four figures moves: each is one composed pose — the climber on a
-     fixed pitch with rope and protection where they belong, the golfer at
-     address, the angler on the drift with the fly already down, the hiker caught
-     mid-stride. What still runs is the world around them: the pass, the birds,
-     the grass. Every pose lives in the static block above, which is the only
+     fixed pitch with rope and protection where they belong, the camper leaning
+     in to the fire, the angler on the drift with the fly already down, the hiker
+     caught mid-stride. What still runs is the world around them: the pass, the
+     birds, the grass, the campfire. Every pose lives in the static block above, which is the only
      place any of them is described. */
 }
 
@@ -1020,6 +1087,33 @@
 @keyframes mg-drift {
   from { transform: translateX(-14px); }
   to   { transform: translateX(18px); }
+}
+
+/* The glow occupies the first ~18% of each cycle (~2s); the rest is rest.
+   A figure is itself amber, so an amber halo alone blends into its own edge
+   and the first version of this — the soft accent line only — was invisible
+   in use. The peak pairs a tight halo in the full accent with a wide soft one
+   and lifts the figure's brightness a touch, so the pulse reads as the figure
+   catching the light. */
+@keyframes mg-spot-pulse {
+  0%,
+  18%,
+  100% {
+    filter: none;
+  }
+  9% {
+    filter: brightness(1.12) drop-shadow(0 0 3px var(--mg-accent)) drop-shadow(0 0 10px var(--mg-accent-line));
+  }
+}
+
+/* Irregular on purpose: a flame that pulses on one even beat reads as a
+   warning light. Scaled from its base, so it never lifts off the logs. */
+@keyframes mg-flicker {
+  0%   { transform: scale(1, 1); }
+  30%  { transform: scale(0.94, 1.08); }
+  55%  { transform: scale(1.04, 0.93); }
+  80%  { transform: scale(0.97, 1.05); }
+  100% { transform: scale(1.02, 0.97); }
 }
 
 @keyframes mg-sway {

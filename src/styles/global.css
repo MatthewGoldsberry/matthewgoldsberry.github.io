@@ -40,6 +40,13 @@
   --mg-surface-hover: light-dark(#fbfcfd, #182238);
   --mg-border: light-dark(#e0e5ec, #232e44);
   --mg-border-strong: light-dark(#c6cedb, #33405c);
+  /* The header's own ground. Not a step up the --mg-bg / --mg-surface ramp:
+     cards are already white by day, so a white header just merged with the
+     first row of them. A cooler, slightly darker slate by day and a lifted
+     navy by night both read as chrome sitting over the page rather than
+     more page. The shadow gives its bottom edge a hard, lit-from-above side. */
+  --mg-chrome: light-dark(#e9edf3, #141c2e);
+  --mg-chrome-shadow: light-dark(rgb(15 23 34 / 0.28), rgb(0 0 0 / 0.7));
 
   --mg-ink: light-dark(#0f1722, #e9eef7);
   --mg-ink-muted: light-dark(#52607a, #97a3b8);
@@ -78,9 +85,21 @@
   /* The sky is a time of day, not a flat panel. Light: a cool pale zenith settling
      onto a faintly warm haze at the horizon — the light a low morning sun throws
      into a valley. Dark: near-black overhead easing into a thin teal air-glow just
-     above the skyline. The gradient between the two lives in Hero.astro. */
+     above the skyline. The gradient between the two lives in Hero.astro.
+
+     By day the horizon is near-white, not the cream it was: the far range is
+     a pale blue-grey, and against a cream that had drifted most of the way
+     to it by the peaks' height the mountains barely separated from the sky.
+     The haze over the ranges is tinted from this too, so it lifts with it.
+     See also `--mg-sky-horizon-at` below. */
   --mg-sky-top: light-dark(#d6e2f2, #05090f);
-  --mg-sky-bottom: light-dark(#f3ede1, #0f2530);
+  --mg-sky-bottom: light-dark(#fdfbf6, #0f2530);
+  /* The portrait's backdrop (Plate.astro): a glow behind the head fading to a
+     field at the edges, drawn from the same sky. By day, the warm horizon
+     haze against a pale zenith blue. By night, a lifted teal rather than the
+     near-black zenith itself, which dark hair disappeared into. */
+  --mg-portrait-glow: light-dark(#fdfbf6, #1f3a4a);
+  --mg-portrait-field: light-dark(#c9d7ea, #070c14);
   /* Six depth planes, not three. Each is a step of aerial perspective toward
      the viewer, so the values have to march in one direction: on dark they get
      progressively darker as they come forward, on light progressively deeper.
@@ -134,8 +153,17 @@
      day. Both values are pulled well back toward their own terrain: this is a
      distant range, so the snow should read as a pale patch on a far summit and
      never as a highlight — at full white it was the brightest thing on the page
-     and took the eye straight off the figures in the foreground. */
-  --mg-snow: light-dark(#fdfaf4, #a6b5cd);
+     and took the eye straight off the figures in the foreground.
+
+     By day the snow is a faint COOL white, against a sky whose horizon is a
+     warm near-white (--mg-sky-bottom). White snow on that sky had nothing to
+     separate on — neither value nor hue — and the caps dissolved into it.
+     Cool against warm does it, while staying far lighter than the blue-grey
+     rock under it, so it still reads as snow rather than more mountain.
+     `--mg-snow-edge` gives the caps a fine cool outline by day; by night the
+     snow already stands off the dark sky, so the edge is transparent. */
+  --mg-snow: light-dark(#eaf1fa, #a6b5cd);
+  --mg-snow-edge: light-dark(#8699b3, transparent);
 
   /* The sky's own objects. Each is only ever painted under one scheme — the moon
      and the galaxy at night, the sun by day — so unlike everything above them
@@ -220,13 +248,38 @@
   --mg-sky-night: none;
   --mg-sky-day: block;
 
+  /* Where the sky gradient reaches `--mg-sky-bottom`, down the hero. By day it
+     arrives above the peaks, so the whole skyline stands against the bright
+     horizon rather than a half-blended blue; by night the teal air-glow is
+     meant to build all the way down to the skyline, so it runs the full
+     height. A length, so it is spelled out per scheme — light-dark() only
+     takes colours. */
+  --mg-sky-horizon-at: 62%;
+
   /* How much of a `.mg-entry--logo-bg` watermark shows through its overlay.
      The same fraction of a light logo reads very differently against a near-
      black surface than against a near-white one: at the level that was
      already right for dark mode, the tint was too close to white to see at
      all in light mode. Light gets a stronger dose to land at the same
-     visible weight. */
+     visible weight.
+
+     The ink half of a mark (`.mg-entry__logo-ink` — Tenet3's "3" and ®) has
+     its own number, because it runs the opposite way. It is drawn in
+     `--color-ink`, near-black by day: the same 0.22 that barely tinted the
+     cyan wordmark left the numeral a heavy grey block behind the text. So by
+     day the ink starts lower; by night, where both are light on a dark card,
+     they share a value.
+
+     These are BASES. By day the logos differ too much for one value to suit
+     them all — Tenet3's pale cyan vanishes at a level where UC's red already
+     competes with the text — so each entry adds its own daytime boost inline
+     (`--mg-entry-logo-day-boost`, `--mg-entry-logo-ink-day-boost`; see
+     content.css). `--mg-day` is what switches those boosts off at night: 1
+     by day, 0 by night, multiplied in. By night every mark is a light shape
+     on a dark card and the bases alone are right for all of them. */
   --mg-entry-logo-strength: 0.22;
+  --mg-entry-logo-ink-strength: 0.12;
+  --mg-day: 1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -235,7 +288,10 @@
     --mg-snow-opacity: 0.62;
     --mg-sky-night: block;
     --mg-sky-day: none;
+    --mg-sky-horizon-at: 100%;
     --mg-entry-logo-strength: 0.09;
+    --mg-entry-logo-ink-strength: 0.09;
+    --mg-day: 0;
   }
 }
 
@@ -244,7 +300,10 @@
   --mg-snow-opacity: 0.62;
   --mg-sky-night: block;
   --mg-sky-day: none;
+  --mg-sky-horizon-at: 100%;
   --mg-entry-logo-strength: 0.09;
+  --mg-entry-logo-ink-strength: 0.09;
+  --mg-day: 0;
 }
 
 :root[data-theme="light"] {
@@ -252,7 +311,10 @@
   --mg-snow-opacity: 0.92;
   --mg-sky-night: none;
   --mg-sky-day: block;
+  --mg-sky-horizon-at: 62%;
   --mg-entry-logo-strength: 0.22;
+  --mg-entry-logo-ink-strength: 0.12;
+  --mg-day: 1;
 }
 
 /* The toggle narrows `color-scheme` rather than restating the palette. */
@@ -284,6 +346,7 @@
   --color-surface-hover: var(--mg-surface-hover);
   --color-edge: var(--mg-border);
   --color-edge-strong: var(--mg-border-strong);
+  --color-chrome: var(--mg-chrome);
 
   --color-ink: var(--mg-ink);
   --color-ink-muted: var(--mg-ink-muted);
@@ -314,8 +377,13 @@
   --animate-blink: mg-blink 3.5s var(--ease-mg) infinite;
 
   /* Layout ----------------------------------------------------------------- */
-  --container-measure: 68ch;
-  --container-page: 61rem;
+  --container-measure: 72ch;
+  --container-page: 70rem;
+  /* Project writeups only — see `ProseLayout`'s `doc` prop. One centred
+     column that text, figures and videos all share, the way a rendered
+     README or docs page reads: about three quarters of a laptop screen,
+     narrower than `--container-page` so it sits visibly in the middle. */
+  --container-doc: 60rem;
 }
 
 /* --------------------------------------------------------------------------
@@ -457,8 +525,12 @@
   }
 
   .prose-mg h2 {
+    /* A section always starts below any image floated beside the one before
+       it (see `.mg-figure--aside` in content.css). */
+    clear: both;
     font-size: clamp(1.4rem, 1.2rem + 1vw, 1.85rem);
     margin-top: 3.5rem;
+    margin-bottom: 1.25rem;
     padding-top: 1.25rem;
     border-top: 1px solid var(--color-edge);
   }
@@ -472,8 +544,32 @@
 
   .prose-mg h3 {
     font-size: 1.15rem;
-    margin-top: 2rem;
-    margin-bottom: 0.5rem;
+    margin-top: 2.5rem;
+    margin-bottom: 0.85rem;
+  }
+
+  /* h4 carried no size or spacing of its own before this — it fell back to
+     the browser default (body-text size, no margin), so a subsection titled
+     with `####` sat flush against the paragraph above and below it,
+     indistinguishable from a bolded word. Sized a step below h3 rather than
+     matching body text, so the four levels these writeups actually use
+     (h1 title, h2 section, h3 subsection, h4 named item within it) each read
+     as a distinct step instead of the last one disappearing. */
+  .prose-mg h4 {
+    font-size: 1rem;
+    margin-top: 1.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  /* No margin survives Preflight's universal reset, so without this a
+     writeup's paragraphs — most of its actual words — ran together with zero
+     gap between them, separated only by line-height. */
+  .prose-mg p {
+    margin: 1em 0;
+  }
+
+  .prose-mg :is(h1, h2, h3, h4) + :is(p, ul, ol, blockquote, figure) {
+    margin-top: 0;
   }
 
   /* Prose is held to a measure; full-bleed components opt out below. */
@@ -487,7 +583,7 @@
      the ones written out below, and lists were the one element type missing
      from that set. */
   .prose-mg :is(ul, ol):not(.mg-pills) {
-    margin: 0.75em 0;
+    margin: 1em 0;
     padding-left: 1.35em;
   }
 
@@ -503,14 +599,55 @@
     margin: 0.35em 0;
   }
 
-  .prose-mg a {
+  /* A link has to look like one without being hovered. Preflight resets
+     `a` to `color: inherit; text-decoration: inherit`, and `.prose-mg` never
+     applied the typography plugin's own element styles — so links were body-
+     coloured with no underline, and only turned up by chance. Now: the text
+     accent, plus a visible underline in the softer accent that goes solid on
+     hover. Amber in running text means "link" and nothing else (see
+     `.mg-field-label` below, which used to share it). `.mg-btn` is excluded —
+     buttons are <a> too, and have their own look. */
+  .prose-mg a:not(.mg-btn) {
+    color: var(--color-accent-text);
+    text-decoration-line: underline;
     text-decoration-color: var(--color-accent-line);
-    text-underline-offset: 0.18em;
-    transition: color 140ms var(--ease-mg);
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.2em;
+    transition:
+      color 140ms var(--ease-mg),
+      text-decoration-color 140ms var(--ease-mg);
   }
 
-  .prose-mg a:hover {
-    color: var(--color-accent);
+  .prose-mg blockquote {
+    margin: 1.5em 0;
+    padding: 0.2em 0 0.2em 1.1em;
+    border-left: 3px solid var(--color-accent-line);
+    font-style: italic;
+    color: var(--color-ink);
+  }
+
+  .prose-mg blockquote > :last-child {
+    margin-bottom: 0;
+  }
+
+  /* `.mg-field-label` is set by the `rehype-field-labels` plugin on a leading
+     bold run that has more text after it — "Role", "What this shows:", "The
+     Problem:" — so it can be styled as a small run-in tag instead of inline
+     bold, and a writeup built largely from these (there are several) reads
+     as a list of labelled facts rather than a wall of bolded fragments. See
+     that plugin for why this has to be a build-time class rather than a bare
+     CSS selector. */
+  /* Ink, not the accent: amber in running text is reserved for links, and a
+     bold amber label beside an amber link made the label the thing that
+     looked clickable. */
+  .prose-mg .mg-field-label {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  .prose-mg a:not(.mg-btn):hover {
+    color: var(--color-accent-text);
+    text-decoration-color: currentColor;
   }
 
   .prose-mg :is(img, video) {
@@ -520,11 +657,30 @@
     height: auto;
   }
 
+  /* A demo video has no natural size of its own to fall back on the way a
+     screenshot does, so without this it renders at whatever intrinsic size
+     the browser guesses before metadata loads — unlike an image, it should
+     always claim the full width its figure has to give it. */
+  .prose-mg video {
+    width: 100%;
+  }
+
+  /* A bare markdown image is inline content, so CommonMark always wraps it in
+     a `<p>` — the new paragraph margin above already spaces those. `<figure>`
+     (every video, and any image given an explicit caption) is a block in its
+     own right and carries no margin of its own from Preflight's universal
+     reset, so it needs the same air spelled out here. */
+  .prose-mg > figure {
+    margin: 1.75em 0;
+  }
+
   .prose-mg figure img {
     box-shadow: var(--mg-shadow);
+    margin: 0;
   }
 
   .prose-mg figcaption {
+    margin-top: 0.6em;
     font-family: var(--font-mono);
     font-size: var(--text-label);
     letter-spacing: 0.04em;
@@ -543,27 +699,12 @@
     content: "";
   }
 
-  .prose-mg pre {
-    border: 1px solid var(--color-edge);
-    border-radius: var(--radius-md);
-    font-size: 0.82em;
-  }
+  /* Code blocks are framed by `.mg-code` in content.css — every <pre> the
+     Markdown pipeline emits is wrapped in one by `rehype-code-frame`. */
 
-  .prose-mg table {
-    border: 1px solid var(--color-edge);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    font-size: 0.85rem;
-  }
-
-  .prose-mg thead th {
-    background: var(--color-surface);
-    font-family: var(--font-mono);
-    font-size: var(--text-label);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-ink);
-  }
+  /* Tables are framed and styled by `.mg-table` in content.css — every
+     <table> the Markdown pipeline emits is wrapped in one by
+     `rehype-table-frame`. */
 
   /* Components dropped into Markdown are full-bleed by design. */
   .prose-mg
@@ -581,5 +722,36 @@
       .mg-todo
     ) {
     max-width: none;
+  }
+
+  /* Project writeups — one centred column, like a rendered README. The
+     column itself (`max-w-doc`, set by `ProseLayout`) is the measure here, so
+     text fills it instead of stopping at `--container-measure` short of its
+     right edge. Declared after the measure rule above so it wins the tie. */
+  .prose-mg--doc > :is(p, ul, ol, blockquote) {
+    max-width: none;
+  }
+
+  /* Images sit centred at their own size, never wider than the column and
+     never taller than most of a screen — a square mission patch or a tall
+     poster would otherwise fill the column's full width and run to 960px
+     tall. Two classes so this outranks `.prose-mg figure img`'s `margin: 0`.
+     Videos are left at full column width: they have no intrinsic size until
+     metadata loads (see `.prose-mg video`). */
+  .prose-mg.prose-mg--doc img {
+    display: block;
+    width: auto;
+    max-height: min(36rem, 75vh);
+    margin-inline: auto;
+  }
+
+  /* Consecutive bare images land in one Markdown paragraph; now that each is
+     a block they need air between them. */
+  .prose-mg.prose-mg--doc img + img {
+    margin-top: 1.25rem;
+  }
+
+  .prose-mg--doc figcaption {
+    text-align: center;
   }
 }

@@ -1,8 +1,8 @@
 ---
 title: "Research"
 description: "Master's thesis research at CincyNLP on steering multimodal large language models."
-lede: "Research with Mutlimodal Large Language Models, specifically steering them."
-heroImage: "/assets/media/cincyNLP.png"
+lede: "Research with Mutlimodal Large Language Models Interpretability, specifically steering them."
+heroImage: "/assets/media/logos/cincy-nlp.png"
 heroImageAlt: "CincyNLP"
 heroActionLabel: "CincyNLP"
 heroActionHref: "https://jiangtianyu.com/lab/"

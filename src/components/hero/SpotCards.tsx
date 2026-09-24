@@ -32,6 +32,7 @@ export interface SpotCard {
   title: string;
   text: string;
   image?: string | undefined;
+  imageFit: "cover" | "contain";
   href?: string | undefined;
 }
 
@@ -128,11 +129,24 @@ export default function SpotCards({ spots }: Props) {
       setActive(null);
     };
 
+    const hrefs = new Map(spots.map((spot) => [spot.key, spot.href]));
     const cleanups: Array<() => void> = [];
 
     for (const figure of figures) {
       const hit = figure.querySelector<SVGRectElement>(".mg-spot__hit");
       if (!hit) continue;
+
+      /* A spot with an `href` in spots.yaml is also a link to its page. The
+         class is what gives it the pointer cursor, so a figure that only opens
+         a card never promises a click it cannot keep. */
+      const href = hrefs.get(figure.dataset.spot as SpotKey);
+      figure.classList.toggle("mg-spot--link", Boolean(href));
+
+      const go = (e: MouseEvent) => {
+        if (!href) return;
+        if (e.metaKey || e.ctrlKey) window.open(href, "_blank", "noopener");
+        else window.location.assign(href);
+      };
 
       const onEnter = (e: PointerEvent) => {
         if (e.pointerType === "mouse") open(figure);
@@ -140,21 +154,30 @@ export default function SpotCards({ spots }: Props) {
       const onLeave = (e: PointerEvent) => {
         if (e.pointerType === "mouse") close();
       };
-      // Touch has no hover, so a tap toggles.
+      /* Touch has no hover, so the first tap opens the card — you get to read
+         it before you are taken anywhere — and a second tap on the same figure
+         follows the link, or closes the card if there is none. */
       const onDown = (e: PointerEvent) => {
         if (e.pointerType === "mouse") return;
-        if (anchorRef.current === figure) close();
-        else open(figure);
+        if (anchorRef.current !== figure) open(figure);
+        else if (href) go(e);
+        else close();
+      };
+      // With a mouse the card is already open from the hover, so a click goes.
+      const onClick = (e: PointerEvent) => {
+        if (e.pointerType === "mouse") go(e);
       };
 
       hit.addEventListener("pointerenter", onEnter);
       hit.addEventListener("pointerleave", onLeave);
       hit.addEventListener("pointerdown", onDown);
+      hit.addEventListener("click", onClick);
 
       cleanups.push(() => {
         hit.removeEventListener("pointerenter", onEnter);
         hit.removeEventListener("pointerleave", onLeave);
         hit.removeEventListener("pointerdown", onDown);
+        hit.removeEventListener("click", onClick);
       });
     }
 
@@ -169,7 +192,7 @@ export default function SpotCards({ spots }: Props) {
     cleanups.push(() => document.removeEventListener("pointerdown", onDocDown));
 
     return () => cleanups.forEach((fn) => fn());
-  }, []);
+  }, [spots]);
 
   /* Reflect the open card back onto the scene: the hovered figure keeps its
      weight and everything else falls back. Emphasis is subtraction — the active
@@ -252,7 +275,11 @@ export default function SpotCards({ spots }: Props) {
                  background behind it is what a photo (no dead space to show)
                  quietly fills edge to edge on its own. */
               <img
-                className="block h-34 w-full border-b border-edge bg-bg object-contain p-2"
+                className={
+                  spot.imageFit === "cover"
+                    ? "block h-34 w-full border-b border-edge bg-bg object-cover"
+                    : "block h-34 w-full border-b border-edge bg-bg object-contain p-2"
+                }
                 src={spot.image}
                 alt=""
                 loading="lazy"
@@ -266,11 +293,10 @@ export default function SpotCards({ spots }: Props) {
                 }
               />
             ) : (
-              /* The personal spots (climbing, fishing, golf, hiking) carry no
-                 `image` in spots.yaml yet. This reserves the same slot a photo
-                 would take rather than letting the card jump straight to text,
-                 so dropping a path into the YAML later is the only change a
-                 photo ever needs. */
+              /* A spot with no `image` in spots.yaml (or one that failed to
+                 load) still reserves the slot a photo would take rather than
+                 letting the card jump straight to text, so dropping a path into
+                 the YAML later is the only change a photo ever needs. */
               <div className="flex h-34 w-full items-center justify-center border-b border-edge bg-bg text-ink-faint/40">
                 <svg
                   width="28"
@@ -295,6 +321,15 @@ export default function SpotCards({ spots }: Props) {
               <p className="m-0 text-[0.82rem] leading-relaxed text-ink-muted">
                 {spot.text}
               </p>
+              {spot.href && (
+                <p className="m-0 mt-2.5 font-mono text-label tracking-[0.14em] text-accent-text uppercase">
+                  <span className="pointer-coarse:hidden">Click to open</span>
+                  <span className="hidden pointer-coarse:inline">
+                    Tap again to open
+                  </span>{" "}
+                  &rarr;
+                </p>
+              )}
             </figcaption>
           </figure>
         );

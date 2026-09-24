@@ -24,7 +24,7 @@ one component is, and the result is:
 
 | Page | JavaScript shipped |
 | --- | --- |
-| Project writeups, experience, research, résumé | ~0.3 kB (the scheme toggle) |
+| Project writeups, experience, research, résumé | ~0.3 kB (the scheme toggle), plus a small script that enables code-block copy buttons |
 | Landing page | ~0.3 kB, plus the hover-card island loaded on idle |
 
 The scene's stylesheet code-splits the same way: `scene.css` is ~13 kB and only the

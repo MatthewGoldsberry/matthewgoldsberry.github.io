@@ -7,7 +7,7 @@ description: "Software engineering internships at Tenet3, team lead at Discovery
 
 <div class="mg-timeline" markdown>
 
-<div class="mg-entry mg-entry--logo-bg mg-entry--current" style="--mg-entry-logo: url('/assets/media/Tenet3-mark.svg'); --mg-entry-logo-ink: url('/assets/media/Tenet3-numeral.svg'); --mg-entry-logo-size: 92% 92%" markdown>
+<div class="mg-entry mg-entry--logo-bg mg-entry--current" style="--mg-entry-logo: url('/assets/media/logos/tenet3-mark.svg'); --mg-entry-logo-ink: url('/assets/media/logos/tenet3-numeral.svg'); --mg-entry-logo-size: 92% 92%; --mg-entry-logo-day-boost: 0.08; --mg-entry-logo-ink-day-boost: 0.1" markdown>
 <span class="mg-entry__logo-ink"></span>
 <div class="mg-entry__body" markdown>
 <p class="mg-entry__role">Platform Services Intern</p>
@@ -16,11 +16,11 @@ description: "Software engineering internships at Tenet3, team lead at Discovery
 - Designed and built a proof-of-concept agentic service for the company's SaaS platform, from its infrastructure through the agents themselves
 - Used Temporal and Pydantic AI to orchestrate a supervisor agent that delegates to sub-agents and tools
 
-<ul class="mg-pills"><li>Temporal</li><li>Pydantic AI</li><li>Python</li></ul>
+<ul class="mg-pills"><li>Agentic Workflows</li><li>Pydantic AI</li><li>Durable Execution</li></ul>
 </div>
 </div>
 
-<div class="mg-entry mg-entry--logo-bg" style="--mg-entry-logo: url('/assets/media/Tenet3-mark.svg'); --mg-entry-logo-ink: url('/assets/media/Tenet3-numeral.svg'); --mg-entry-logo-size: 92% 92%" markdown>
+<div class="mg-entry mg-entry--logo-bg" style="--mg-entry-logo: url('/assets/media/logos/tenet3-mark.svg'); --mg-entry-logo-ink: url('/assets/media/logos/tenet3-numeral.svg'); --mg-entry-logo-size: 92% 92%; --mg-entry-logo-day-boost: 0.08; --mg-entry-logo-ink-day-boost: 0.1" markdown>
 <span class="mg-entry__logo-ink"></span>
 <div class="mg-entry__body" markdown>
 <p class="mg-entry__role">Advanced Capabilities Intern</p>
@@ -31,11 +31,11 @@ description: "Software engineering internships at Tenet3, team lead at Discovery
 - Built an internal Python package standardizing dev containers for around 30 engineers
 - Refactored GitLab CI templates and built a CLI for configuring developer machines
 
-<ul class="mg-pills"><li>Python</li><li>GitLab CI</li><li>Docker</li></ul>
+<ul class="mg-pills"><li>Data Conversion</li><li>Containers</li><li>GitLab CI/CD</li><li>Developer Tooling</li><li>Pydantic</li></ul>
 </div>
 </div>
 
-<div class="mg-entry mg-entry--logo-bg" style="--mg-entry-logo: url('/assets/media/Tenet3-mark.svg'); --mg-entry-logo-ink: url('/assets/media/Tenet3-numeral.svg'); --mg-entry-logo-size: 92% 92%" markdown>
+<div class="mg-entry mg-entry--logo-bg" style="--mg-entry-logo: url('/assets/media/logos/tenet3-mark.svg'); --mg-entry-logo-ink: url('/assets/media/logos/tenet3-numeral.svg'); --mg-entry-logo-size: 92% 92%; --mg-entry-logo-day-boost: 0.08; --mg-entry-logo-ink-day-boost: 0.1" markdown>
 <span class="mg-entry__logo-ink"></span>
 <div class="mg-entry__body" markdown>
 <p class="mg-entry__role">Quality Engineering Intern</p>
@@ -44,11 +44,11 @@ description: "Software engineering internships at Tenet3, team lead at Discovery
 - Automated regression tests with Selenium and folded them into the existing test suite
 - Reviewed merge requests by hand and documented test coverage as part of the release process
 
-<ul class="mg-pills"><li>Selenium</li><li>Python</li></ul>
+<ul class="mg-pills"><li>Selenium</li><li>QA</li></ul>
 </div>
 </div>
 
-<div class="mg-entry mg-entry--logo-bg" style="--mg-entry-logo: url('/assets/media/discovery-lab-global.png')" markdown>
+<div class="mg-entry mg-entry--logo-bg" style="--mg-entry-logo: url('/assets/media/logos/discovery-lab-global.png'); --mg-entry-logo-day-boost: 0.2" markdown>
 <div class="mg-entry__body" markdown>
 <p class="mg-entry__role">Team Lead</p>
 <p class="mg-entry__meta">Discovery Lab Global · Remote · Aug – Dec 2023</p>
@@ -57,7 +57,7 @@ description: "Software engineering internships at Tenet3, team lead at Discovery
 - Co-authored a 457-page technical document covering the implementation and how it connects to current AI research
 - Presented the project at the Ohio Defense and Aerospace Forum
 
-<ul class="mg-pills"><li>Python</li><li>PyGame</li><li>Q-learning</li></ul>
+<ul class="mg-pills"><li>Q-Learning</li><li>PyGame</li><li>Technical Writing</li><li>Project Management</li></ul>
 </div>
 </div>
 
@@ -67,7 +67,7 @@ description: "Software engineering internships at Tenet3, team lead at Discovery
 
 <div class="mg-timeline" markdown>
 
-<div class="mg-entry mg-entry--logo-bg mg-entry--current" style="--mg-entry-logo: url('/assets/media/UC-logo-mark.png'); --mg-entry-logo-ink: url('/assets/media/UC-logo-text.png'); --mg-entry-logo-size: 92% 92%" markdown>
+<div class="mg-entry mg-entry--logo-bg mg-entry--current" style="--mg-entry-logo: url('/assets/media/logos/uc-mark.png'); --mg-entry-logo-ink: url('/assets/media/logos/uc-text.png'); --mg-entry-logo-size: 92% 92%; --mg-entry-logo-ink-day-boost: 0.06" markdown>
 <span class="mg-entry__logo-ink"></span>
 <div class="mg-entry__body" markdown>
 <p class="mg-entry__role">B.S. &amp; M.S. Computer Science</p>
@@ -82,11 +82,3 @@ Database Design · Advanced Algorithms · Software Engineering · Technical Writ
 </div>
 
 </div>
-
-<p class="mg-eyebrow">Activities</p>
-
-<ul class="mg-pills">
-<li>UC Climbing Club · Jan 2025 – present</li>
-<li>UC CubeCats · Aug 2024 – present</li>
-<li>Eagle Scout · Mar 2020</li>
-</ul>

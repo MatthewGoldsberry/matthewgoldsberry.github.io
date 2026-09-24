@@ -2,7 +2,7 @@
 title: "Smart Pong"
 description: "A tabular Q-learning agent that learns paddle control from delayed win/loss rewards in a custom PyGame environment."
 summary: "A tabular Q-learning agent that learns paddle control from delayed win/loss rewards in a custom PyGame environment, built during the Discovery Lab Global AI program after my freshman year."
-image: "/assets/media/smart-pong/pygame-visual.png"
+image: "/assets/media/projects/smart-pong/pygame-visual.png"
 imageAlt: "Smart Pong training environment"
 tech:
   - "Python"
@@ -21,7 +21,7 @@ ongoing: false
 <div class="mg-project-header">
 <p class="mg-meta"><span><strong>Role</strong> Team lead</span> <span><strong>Discovery Lab Global</strong> Aug&ndash;Dec 2023</span> <span><strong>Presented</strong> Ohio Defense &amp; Aerospace Forum</span></p>
 <ul class="mg-pills"><li>Python</li><li>PyGame</li><li>Q-learning</li><li>Reinforcement learning</li></ul>
-<p class="mg-btn-row"><a class="mg-btn mg-btn--primary" href="https://github.com/MatthewGoldsberry/PongAI-QLearning" target="_blank" rel="noopener">Source</a> <a class="mg-btn" href="/assets/media/smart-pong/smartpong-technical-excerpt.pdf">Technical excerpt (PDF)</a></p>
+<p class="mg-btn-row"><a class="mg-btn mg-btn--primary" href="https://github.com/MatthewGoldsberry/PongAI-QLearning" target="_blank" rel="noopener">Source</a> <a class="mg-btn" href="/assets/media/projects/smart-pong/smartpong-technical-excerpt.pdf">Technical excerpt (PDF)</a></p>
 </div>
 
 ## Overview
@@ -40,7 +40,7 @@ This project demonstrates how a reinforcement learning agent can learn strategy,
 A custom Pong environment was implemented in Python using [PyGame](https://www.pygame.org/) as a testbed for reinforcement learning agents. It mimics the classic Atari Pong game, providing a simplified yet interactive environment where an agent controls a paddle against a computer-controlled opponent.
 
 <figure>
-  <img src="/assets/media/smart-pong/pygame-visual.png" alt="Image title" loading="lazy" decoding="async">
+  <img src="/assets/media/projects/smart-pong/pygame-visual.png" alt="Image title" loading="lazy" decoding="async">
 </figure>
 
 ### Agent Interaction
@@ -121,7 +121,7 @@ Since **Stay** has the highest Q-value, the agent chooses that action, enabling 
 Q-values are continuously updated using the **Bellman Equation**, which combines immediate feedback with an estimate of future outcomes.
 
 <figure>
-  <img src="/assets/media/smart-pong/bellman-equation.png" alt="Bellman Equation" loading="lazy" decoding="async">
+  <img src="/assets/media/projects/smart-pong/bellman-equation.png" alt="Bellman Equation" loading="lazy" decoding="async">
 </figure>
 
 At a high level, the Bellman update answers:
@@ -130,63 +130,65 @@ At a high level, the Bellman update answers:
 
 Each update nudges the Q-value toward a better estimate of long-term reward.
 
-??? info "In-Depth Explanation of the Bellman Equation"
-    The Q-learning update:
+:::info{title="In-Depth Explanation of the Bellman Equation" collapsible}
+The Q-learning update:
 
-    ```
-    Q(s, a) ← Q(s, a) + α [ r + γ max Q(s′, a′) − Q(s, a) ]
-    ```
+```
+Q(s, a) ← Q(s, a) + α [ r + γ max Q(s′, a′) − Q(s, a) ]
+```
 
-    **1. Estimate the Best Possible Future**  
-    ```
-    max Q(s′, a′)
-    ```
-    This predicts the best outcome achievable from the next state, assuming optimal future decisions.
+**1. Estimate the Best Possible Future**
+```
+max Q(s′, a′)
+```
+This predicts the best outcome achievable from the next state, assuming optimal future decisions.
 
-    **2. Discount the Future**  
-    ```
-    γ max Q(s′, a′)
-    ```
-    Future rewards are uncertain, so they are slightly discounted:
-    - **γ ≈ 1** → long-term planning  
-    - **γ ≈ 0** → short-term, reactive behavior
+**2. Discount the Future**
+```
+γ max Q(s′, a′)
+```
+Future rewards are uncertain, so they are slightly discounted:
+- **γ ≈ 1** → long-term planning
+- **γ ≈ 0** → short-term, reactive behavior
 
-    **3. Form a New Target Value**  
-    ```
-    r + γ max Q(s′, a′)
-    ```
-    Combines immediate reward with best expected future outcome.
+**3. Form a New Target Value**
+```
+r + γ max Q(s′, a′)
+```
+Combines immediate reward with best expected future outcome.
 
-    **4. Calculate the Temporal-Difference (TD) Error**  
-    ```
-    target − Q_old
-    ```
-    Measures how wrong the previous belief was:
-    - Positive → action better than expected  
-    - Negative → action worse than expected
+**4. Calculate the Temporal-Difference (TD) Error**
+```
+target − Q_old
+```
+Measures how wrong the previous belief was:
+- Positive → action better than expected
+- Negative → action worse than expected
 
-    **5. Update the Q-Value**  
-    ```
-    Q_new = Q_old + α (target − Q_old)
-    ```
-    Gradually adjusts the Q-value toward the new estimate.
+**5. Update the Q-Value**
+```
+Q_new = Q_old + α (target − Q_old)
+```
+Gradually adjusts the Q-value toward the new estimate.
+:::
 
-??? info "Step-by-Step Update Example"
-    - **Current state**: Above  
-    - **Action**: Move Down  
-    - **Current Q-value**: −0.80  
-    - **Reward**: 0  
-    - **Best future Q-value**: 0.90  
-    - **Learning rate (α)**: 0.1  
-    - **Discount factor (γ)**: 0.9  
+:::info{title="Step-by-Step Update Example" collapsible}
+- **Current state**: Above
+- **Action**: Move Down
+- **Current Q-value**: −0.80
+- **Reward**: 0
+- **Best future Q-value**: 0.90
+- **Learning rate (α)**: 0.1
+- **Discount factor (γ)**: 0.9
 
-    ```
-    Q_new = -0.80 + 0.1 [ 0 + 0.9 × 0.90 − (−0.80) ]
-    Q_new = -0.80 + 0.1 [ 1.61 ]
-    Q_new = -0.639
-    ```
+```
+Q_new = -0.80 + 0.1 [ 0 + 0.9 × 0.90 − (−0.80) ]
+Q_new = -0.80 + 0.1 [ 1.61 ]
+Q_new = -0.639
+```
 
-    Even without immediate reward, the action led to a state with high future potential. Over many iterations, these incremental updates produce increasingly effective gameplay.
+Even without immediate reward, the action led to a state with high future potential. Over many iterations, these incremental updates produce increasingly effective gameplay.
+:::
 
 ### Key Takeaway
 
@@ -218,8 +220,8 @@ The final agent achieved strong performance:
 The following video demonstrates the agent learning in real time, showing the progression from exploratory behavior to stable strategy:
 
 <figure>
-  <video controls loop muted playsinline width="700">
-    <source src="/assets/media/smart-pong/pong-learning-demonstration.mp4" type="video/mp4">
+  <video controls loop muted playsinline>
+    <source src="/assets/media/projects/smart-pong/pong-learning-demonstration.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
   <figcaption>SmartPong AI learning paddle control through Q-learning</figcaption>
@@ -240,13 +242,13 @@ Potential extensions include:
 I presented the SmartPong program at Discovery Lab Global during the **Ohio Defense and Aerospace Forum (2024)**, sharing my perspective as a program participant and using the AI project to illustrate how the program supports workforce development. I engaged with industry professionals, educators, and students across defense, aerospace, and technology sectors.
 
 <figure>
-  <img src="/assets/media/smart-pong/conference-poster.jpg" alt="SmartPong AI Poster Session" loading="lazy" decoding="async">
+  <img src="/assets/media/projects/smart-pong/conference-poster.jpg" alt="SmartPong AI Poster Session" loading="lazy" decoding="async">
   <figcaption>Presenting SmartPong AI at the Ohio Defense and Aerospace Forum (2024)</figcaption>
 </figure>
 
 I co-authored a **450+ page technical document** for the project, covering implementation, reinforcement learning theory, and broader AI context. All concepts referenced here are detailed in that document. To improve accessibility, I created a **condensed 30-page excerpt** highlighting key design decisions and connections to modern AI research, including *Pong from Pixels* (Karpathy), *Attention Is All You Need* (Vaswani et al.), and the use of ChatGPT as a development aid.
 
-> **[Download the 30-Page Technical Excerpt](/assets/media/smart-pong/smartpong-technical-excerpt.pdf)**
+> **[Download the 30-Page Technical Excerpt](/assets/media/projects/smart-pong/smartpong-technical-excerpt.pdf)**
 
 ---
 

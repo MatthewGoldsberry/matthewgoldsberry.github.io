@@ -7,8 +7,11 @@
  * "flight software" three lines down was decoration doing a job the copy does
  * better.
  *
- * It is sticky and translucent rather than fixed and opaque, so the pass at the
- * top of the hero reads through it as the page starts to move.
+ * It is sticky and only slightly translucent: its own `--color-chrome` ground,
+ * a strong bottom rule and a drop shadow keep it visibly separate from the
+ * page (sharing the page's own colour, it used to blur into it), while the
+ * few percent of see-through still lets the pass at the top of the hero
+ * show as the page starts to move.
  *
  * Each section link is full-height and carries its own bottom edge — a crisp
  * accent bar for the current section, the same bar at rest opacity on hover —
@@ -37,7 +40,7 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
 ---
 
 <header
-  class="sticky top-0 z-40 border-b border-edge bg-[color-mix(in_srgb,var(--color-bg)_88%,transparent)] backdrop-blur-md"
+  class="sticky top-0 z-40 border-b border-edge-strong bg-[color-mix(in_srgb,var(--color-chrome)_92%,transparent)] shadow-[0_8px_20px_-12px_var(--mg-chrome-shadow)] backdrop-blur-md"
 >
   <div
     class="mx-auto flex h-[var(--mg-header-h)] w-full max-w-[90rem] items-stretch justify-between gap-4 px-4 sm:px-6"

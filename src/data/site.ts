@@ -69,19 +69,14 @@ export const hero = {
     "and ground stations, and data visualizations - much of it for systems that run unattended. " +
     "I'm an intern at Tenet3, lead the On-Board Computer team at UC CubeCats, and research " +
     "multimodal LLMs.",
-  photo: "/assets/media/profile.jpg",
+  /* A cutout on a transparent field: Plate.astro paints the background per
+     scheme. profile.jpg stays as the social-card image in BaseLayout, where a
+     transparent field would render as black or white depending on the app. */
+  photo: "/assets/media/profile-cutout.webp",
   photoAlt: "Matthew Goldsberry",
 
-  /**
-   * Two rows, no more: the plate is 200px wide and these are the two facts a
-   * hiring reader checks straight after the name. `led` lights the status dot.
-   */
-  plate: [
-    { label: "Based", value: "Cincinnati, OH" },
-    // Kept short enough to hold one line inside the plate — the closing contact
-    // band is where "internship in systems / ML / flight software" is spelled out.
-    { label: "Status", value: "Open to summer 2027", led: true },
-  ],
+  /** The one line under the portrait. */
+  location: "Cincinnati, OH",
 
   /**
    * One compact line under the hero: employer, research, graduation. Above the
@@ -158,28 +153,37 @@ export const skills = [
   },
   {
     group: "Systems & cloud",
-    items: ["Git", "CI/CD", "Docker", "AWS", "Azure", "GCP", "GitLab"],
+    items: [
+      "Software architecture",
+      "Distributed OS",
+      "Git",
+      "GitLab",
+      "CI/CD",
+      "Docker",
+      "AWS",
+      "Azure",
+      "GCP",
+    ],
   },
   {
     group: "Data & ML",
     items: [
       "Pandas",
+      "NumPy",
       "D3.js",
+      "Machine learning",
       "Reinforcement learning",
       "NLP",
+      "Computer vision",
       "Multimodal LLMs",
-      "Databricks",
-      "Snowflake",
     ],
   },
   {
+    group: "AI agents",
+    items: ["Agentic workflows", "Durable execution", "Pydantic AI"],
+  },
+  {
     group: "Embedded & flight",
-    items: [
-      "Embedded C",
-      "Flight software",
-      "Sensor drivers",
-      "Telemetry",
-      "Hardware test",
-    ],
+    items: ["Embedded C", "Flight software", "Hardware testing"],
   },
 ] as const;

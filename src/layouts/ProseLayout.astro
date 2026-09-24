@@ -35,6 +35,12 @@ interface Props {
    */
   heroActionLabel?: string | undefined;
   heroActionHref?: string | undefined;
+  /**
+   * Project writeups: one centred column that the title, text, figures and
+   * videos all share, like a rendered README — rather than the default of
+   * text held to a measure along the left edge. See `.prose-mg--doc`.
+   */
+  doc?: boolean | undefined;
 }
 
 const {
@@ -47,12 +53,17 @@ const {
   heroImageAlt,
   heroActionLabel,
   heroActionHref,
+  doc = false,
 } = Astro.props;
 const heroAction = heroActionLabel && heroActionHref;
 ---
 
-<BaseLayout title={title} description={description} image={image ?? heroImage}>
-  <article class="prose-mg">
+<BaseLayout
+  title={title}
+  description={description}
+  image={image ?? heroImage}
+>
+  <article class:list={["prose-mg", doc && "prose-mg--doc mx-auto max-w-doc"]}>
     <header
       class:list={[
         "relative flex flex-wrap items-start justify-between gap-6",
@@ -133,3 +144,39 @@ const heroAction = heroActionLabel && heroActionHref;
     <slot />
   </article>
 </BaseLayout>
+
+<script>
+  /* Code-block copy buttons. The buttons themselves are static markup from
+     `rehype-code-frame` and ship `hidden`, so a page without this script (or
+     a browser without the Clipboard API) never shows one that can't work. */
+  const RESET_MS = 1800;
+
+  if (navigator.clipboard) {
+    for (const button of document.querySelectorAll<HTMLButtonElement>(".mg-code__copy")) {
+      button.hidden = false;
+    }
+
+    document.addEventListener("click", async (event) => {
+      const button = (event.target as Element | null)?.closest<HTMLButtonElement>(
+        ".mg-code__copy",
+      );
+      const code = button?.parentElement?.querySelector("pre");
+      if (!button || !code) return;
+
+      const status = button.querySelector(".mg-code__status");
+      try {
+        await navigator.clipboard.writeText(code.textContent ?? "");
+        button.dataset.state = "done";
+        if (status) status.textContent = "Copied";
+      } catch {
+        /* Permission refused. Select the text so a keyboard copy still works. */
+        getSelection()?.selectAllChildren(code);
+        if (status) status.textContent = "Selected";
+      }
+      window.setTimeout(() => {
+        delete button.dataset.state;
+        if (status) status.textContent = "";
+      }, RESET_MS);
+    });
+  }
+</script>

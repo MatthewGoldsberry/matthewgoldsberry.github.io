@@ -49,6 +49,7 @@ const spots = (await getCollection("spots")).map((entry) => ({
   title: entry.data.title,
   text: entry.data.text,
   image: entry.data.image,
+  imageFit: entry.data.imageFit,
   href: entry.data.href,
 }));
 ---
@@ -68,7 +69,7 @@ const spots = (await getCollection("spots")).map((entry) => ({
       </h1>
 
       <p
-        class="m-0 mb-[clamp(0.6rem,1.4vh,1rem)] max-w-[42ch] text-[clamp(0.95rem,0.88rem+0.4vw,1.2rem)] leading-relaxed text-ink-muted"
+        class="m-0 mb-[clamp(0.6rem,1.4vh,1rem)] max-w-[60ch] text-[clamp(0.95rem,0.88rem+0.4vw,1.2rem)] leading-relaxed text-ink-muted"
       >
         {hero.lede}
       </p>
@@ -126,7 +127,11 @@ const spots = (await getCollection("spots")).map((entry) => ({
     /* Ends on sky, not on the page ground: the panorama's terrain planes are
        drawn to separate against --mg-sky-bottom, and against the page background
        the nearest of them all but disappears. */
-    background: linear-gradient(180deg, var(--mg-sky-top) 0%, var(--mg-sky-bottom) 100%);
+    background: linear-gradient(
+      180deg,
+      var(--mg-sky-top) 0%,
+      var(--mg-sky-bottom) var(--mg-sky-horizon-at)
+    );
     /* A crisp edge, flush with the ticker strip directly below — no stacked-
        card lip. That shadow stack (solid offset "sheets" plus a soft cast
        shadow) existed to bridge the hero's negative margin over the page
@@ -160,9 +165,11 @@ const spots = (await getCollection("spots")).map((entry) => ({
   }
 
   /* Identity left, plate right. `auto` on the second track rather than a
-     fraction: the plate is sized by the photo inside it, which is a fixed 200px
-     square, so letting the grid stretch it would only blow the picture up past
-     the resolution it actually has.
+     fraction: the plate is sized by the photo inside it (see Plate.astro), so
+     the column is exactly as wide as the picture and the copy takes the rest.
+     That is also why the lede's measure is 60ch rather than a tighter one —
+     with the plate down to a single portrait, a narrower cap would leave the
+     freed width as a gap between the text and the photo.
 
      `flex: 1 1 auto` with `align-content: center` takes the slack the panorama
      could not, so a tall window opens up sky around the copy rather than leaving
@@ -204,8 +211,16 @@ const spots = (await getCollection("spots")).map((entry) => ({
        budget. */
     padding: clamp(0.5rem, 1.8vh, 1.4rem) 1.2rem 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: clamp(1.5rem, 5vw, 3.5rem);
+    /* Copy and plate are one centred group rather than pinned to opposite
+       edges of the page: the copy's track is capped at 42rem (enough for the
+       name at full size and the lede's measure) and `justify-content` centres
+       both tracks together, so any spare width lands outside the pair instead
+       of opening a gulf between them. `minmax(0, …)` rather than `auto` because
+       the name is sized in container units against this column, which needs a
+       width that does not depend on its own content. */
+    grid-template-columns: minmax(0, 42rem) auto;
+    justify-content: center;
+    gap: clamp(1.5rem, 3.5vw, 2.75rem);
     align-items: center;
     position: relative;
     z-index: 2;
@@ -232,7 +247,6 @@ const spots = (await getCollection("spots")).map((entry) => ({
 
     :global(.mg-plate) {
       order: 1;
-      justify-self: stretch;
     }
   }
 
@@ -249,9 +263,24 @@ const spots = (await getCollection("spots")).map((entry) => ({
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
+    /* Centred under the hero now that the hero itself is centred, rather than
+       hanging off the container's left edge where no copy starts any more. */
+    justify-content: center;
     font-size: 0.78rem;
     line-height: 1.5;
     color: var(--color-ink-muted);
+    /* A halo in the page's own ground, so the line stays legible wherever the
+       station's mast lands behind it. Where it sits depends on the window's
+       height and the antenna swings through every pass, so no fixed offset
+       can keep the two apart; over open sky the halo matches what is already
+       there and disappears. */
+    text-shadow:
+      0 0 1px var(--color-bg),
+      0 0 2px var(--color-bg),
+      0 0 4px var(--color-bg),
+      0 0 6px var(--color-bg),
+      0 0 10px var(--color-bg),
+      0 0 14px var(--color-bg);
     position: relative;
     z-index: 2;
   }

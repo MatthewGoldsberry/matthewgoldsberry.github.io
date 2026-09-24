@@ -2,7 +2,7 @@
 title: "The Fellowship of the Script"
 description: "Every line of dialogue in the Lord of the Rings trilogy, scraped from fan transcripts and pinned to a map of Middle-earth."
 summary: "Dialogue, movement, and character relationships across the Lord of the Rings trilogy — scraped from fan transcripts and pinned to a map of Middle-earth, so you can watch the Fellowship split and see who is still speaking to whom after it does."
-image: "/assets/media/the-fellowship-of-the-script/dashboard.png"
+image: "/assets/media/projects/the-fellowship-of-the-script/dashboard.png"
 imageAlt: "The Fellowship of the Script dashboard"
 imageFit: "contain"
 tech:
@@ -16,14 +16,14 @@ links:
     href: "https://the-fellowship-of-the-script.vercel.app/"
   - label: "Source"
     href: "https://github.com/MatthewGoldsberry/Movie-Time"
-order: 1
+order: 3
 featured: true
 status: "Live"
 ---
 
 <div class="mg-project-header">
-<p class="mg-meta"><span><strong>Role</strong> Developer &amp; designer</span> <span><strong>Team</strong> With <a href="https://github.com/isaac-dowdy">Isaac Dowdy</a></span> <span><strong>Course project</strong></span></p>
-<ul class="mg-pills"><li>D3.js</li><li>JavaScript</li><li>Python</li><li>NLTK</li><li>BeautifulSoup</li><li>Requests</li></ul>
+<p class="mg-meta"><span><strong>Completed With</strong> <a href="https://github.com/isaac-dowdy">Isaac Dowdy</a></span> <span><strong>Course project</strong></span></p>
+<ul class="mg-pills"><li>D3.js</li><li>JavaScript</li><li>Python</li><li>NLTK</li><li>BeautifulSoup</li><li>Data Visualization</li><li>Web Design</li></ul>
 <p class="mg-btn-row"><a class="mg-btn mg-btn--primary" href="https://the-fellowship-of-the-script.vercel.app/" target="_blank" rel="noopener">Live application</a> <a class="mg-btn" href="https://github.com/MatthewGoldsberry/Movie-Time" target="_blank" rel="noopener">Source</a> <a class="mg-btn" href="#video-demonstration">Demo video</a></p>
 </div>
 
@@ -37,7 +37,7 @@ This project is focused on creating an interactive visualization to explore data
 ## Video Demonstration
 
 <figure>
-  <video controls loop muted playsinline width="700">
+  <video controls loop muted playsinline>
     <source src="https://github.com/MatthewGoldsberry/portfolio/releases/download/v0.0.3/The.Fellowship.of.the.Script.Demo.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
@@ -63,11 +63,11 @@ With these constraints in mind, we developed two early sketches to explore poten
 
 #### Approach 1: No Zoom
 
-![Approach 1 Sketch](/assets/media/the-fellowship-of-the-script/sketch1.png)
+![Approach 1 Sketch](/assets/media/projects/the-fellowship-of-the-script/sketch1.png)
 
 #### Approach 2: More Zoom
 
-![Approach 2 Sketch](/assets/media/the-fellowship-of-the-script/sketch2.png)
+![Approach 2 Sketch](/assets/media/projects/the-fellowship-of-the-script/sketch2.png)
 
 #### Decision and Validation
 
@@ -81,21 +81,21 @@ For character colors, standard high-contrast categorical palettes felt too jarri
 
 ## Visual Components & Interactions
 
-![Dashboard](/assets/media/the-fellowship-of-the-script/dashboard.png)
+![Dashboard](/assets/media/projects/the-fellowship-of-the-script/dashboard.png)
 
 ### Middle Earth Map
 
-![Map](/assets/media/the-fellowship-of-the-script/map.png)
+![Map](/assets/media/projects/the-fellowship-of-the-script/map.png)
 
 **What this shows:** The locations of each member of the Fellowship (Aragorn, Boromir, Legolas, Gimli, Gandalf, Frodo, Sam, Merry, Pippin) in each scene where they have dialogue. Character locations are represented by colored letter icons distinct for each character and correlated to the color used for that character throughout the application. If enabled, the map also shows colored character paths for each scene leading up to the selected scene.
 
 **Interactions:** The user can hover over a character icon to view their specific path (enabled) in isolation to the rest. Clicking on one of these icons shows their information in the panel at the top left of the dashboard.
 
-![Icon Hover](/assets/media/the-fellowship-of-the-script/icon-hover.png)
+![Icon Hover](/assets/media/projects/the-fellowship-of-the-script/icon-hover.png)
 
 ### Scene Controls
 
-![Scene Control](/assets/media/the-fellowship-of-the-script/scene-control.png)
+![Scene Control](/assets/media/projects/the-fellowship-of-the-script/scene-control.png)
 
 The scene control panel at the bottom of the application contains five different components: the scene slider, dropbox, play scene button, play film button, path toggle, and info button.
 
@@ -111,7 +111,7 @@ The scene control panel at the bottom of the application contains five different
 
 **Interactions:** The user can click on the box to expand it, scroll through the list, and select a scene which will populate across the map, scene slider, and info panel.
 
-![Scene Dropbox](/assets/media/the-fellowship-of-the-script/scene-dropbox.png)
+![Scene Dropbox](/assets/media/projects/the-fellowship-of-the-script/scene-dropbox.png)
 
 #### Play Scene Button
 
@@ -119,7 +119,7 @@ The scene control panel at the bottom of the application contains five different
 
 **Interactions:** On click, this button calls a function that steps through the CSV data for the chosen scene, showing text boxes that appear above each character on the map. Clicking again will stop this process.
 
-![Play Scene](/assets/media/the-fellowship-of-the-script/play-scene.png)
+![Play Scene](/assets/media/projects/the-fellowship-of-the-script/play-scene.png)
 
 #### Play Film Button
 
@@ -127,19 +127,19 @@ The scene control panel at the bottom of the application contains five different
 
 **Interactions:** On click, this button steps through each scene starting at the chosen scene, displaying scene information and visualizing character locations on the map. Clicking again will stop this process.
 
-![Play Film](/assets/media/the-fellowship-of-the-script/play-film.png)
+![Play Film](/assets/media/projects/the-fellowship-of-the-script/play-film.png)
 
 #### Path Toggle
 
 On click, this button toggles between showing/hiding character paths on the map. Character paths appear the same color as their node color, consistent throughout the application, tracking the movement of each character throughout the scenes where they have dialogue.
 
-![Paths](/assets/media/the-fellowship-of-the-script/paths.png)
+![Paths](/assets/media/projects/the-fellowship-of-the-script/paths.png)
 
 ### Info Button
 
 The info button at the bottom right of the application calls a pop-up on hover or click to show information about the films, the data used in the project, and other acknowledgements.
 
-![Info](/assets/media/the-fellowship-of-the-script/info.png)
+![Info](/assets/media/projects/the-fellowship-of-the-script/info.png)
 
 ### Scene Co-Occurrence
 
@@ -147,7 +147,7 @@ The info button at the bottom right of the application calls a pop-up on hover o
 
 **Interactions:** On hover of arcs, the visualization will emphasize the interactions connected to the arc (ribbons), and a tooltip will show how many scenes the character had lines in. Clicking will persist this selection. On hover of ribbons, the tooltip will show the relationship of how many times characters shared scenes. The dropdown allows for filtering by movie.
 
-![Scene Co-Occurrence](/assets/media/the-fellowship-of-the-script/scene-co-occurrence.png)
+![Scene Co-Occurrence](/assets/media/projects/the-fellowship-of-the-script/scene-co-occurrence.png)
 
 ### Fellowship Lines
 
@@ -155,7 +155,7 @@ The info button at the bottom right of the application calls a pop-up on hover o
 
 **Interactions:** On hover, the visualization will emphasize the bar and display a tooltip. The dropdown allows for filtering by movie.
 
-![Fellowship Lines](/assets/media/the-fellowship-of-the-script/fellowship-lines.png)
+![Fellowship Lines](/assets/media/projects/the-fellowship-of-the-script/fellowship-lines.png)
 
 ### Scene Info (Minimal View)
 
@@ -163,7 +163,7 @@ The info button at the bottom right of the application calls a pop-up on hover o
 
 **Interactions:** Clicking expand button or text will open the [Scene Info (Expanded View)](#scene-info-expanded-view).
 
-![Scene Info (Minimal)](/assets/media/the-fellowship-of-the-script/scene-info-min.png)
+![Scene Info (Minimal)](/assets/media/projects/the-fellowship-of-the-script/scene-info-min.png)
 
 ### Scene Info (Expanded View)
 
@@ -171,7 +171,7 @@ The info button at the bottom right of the application calls a pop-up on hover o
 
 **Interactions:** Clicking on the section titles or carets allow for the expansion / collapsing of those sub sections. On hover over the bars, the bar will be emphasized and a tooltip with information will appear.
 
-![Scene Info (Expanded)](/assets/media/the-fellowship-of-the-script/scene-info-expanded.png)
+![Scene Info (Expanded)](/assets/media/projects/the-fellowship-of-the-script/scene-info-expanded.png)
 
 ### Fellowship Character Panel
 
@@ -179,7 +179,7 @@ The info button at the bottom right of the application calls a pop-up on hover o
 
 **Interactions:** On click, selecting a character will trigger their specific info panel to appear in the top left.
 
-![Fellowship Character Panel](/assets/media/the-fellowship-of-the-script/fellowship-panel.png)
+![Fellowship Character Panel](/assets/media/projects/the-fellowship-of-the-script/fellowship-panel.png)
 
 ### Character Info (Minimal View)
 
@@ -187,7 +187,7 @@ The info button at the bottom right of the application calls a pop-up on hover o
 
 **Interactions:** Clicking expand button or text will open the [Character Info (Expanded View)](#character-info-expanded-view).
 
-![Character Info (Minimal)](/assets/media/the-fellowship-of-the-script/character-info-min.png)
+![Character Info (Minimal)](/assets/media/projects/the-fellowship-of-the-script/character-info-min.png)
 
 ### Character Info (Expanded View)
 
@@ -195,7 +195,7 @@ The info button at the bottom right of the application calls a pop-up on hover o
 
 **Interactions:** Clicking on the section titles or carets allow for the expansion / collapsing of those sub sections. On hover over the bars, heatmap bins, or words in the cloud, that point will be emphasized and a tooltip containing additional information will appear. Selecting the wiki page button will redirect to an external wiki page about the character. The `Top Words` visualization has three different modes of representing word occurrence, `Most Used`, `Most Frequent`, and `Most Unique`.
 
-![Character Info (Expanded)](/assets/media/the-fellowship-of-the-script/character-info-expanded.png)
+![Character Info (Expanded)](/assets/media/projects/the-fellowship-of-the-script/character-info-expanded.png)
 
 ## Key Discoveries & Findings
 
@@ -203,11 +203,11 @@ The info button at the bottom right of the application calls a pop-up on hover o
 
 One thing that the Lord of the Rings franchise accomplishes very well across the books and films is the intricate character development, especially for the nine members of the fellowship, and the multiple distinct subplots woven into one story. These different narrative lines and interactions between different characters is something that can be clearly seen when using this application.
 
-![Paths](/assets/media/the-fellowship-of-the-script/paths.png)
+![Paths](/assets/media/projects/the-fellowship-of-the-script/paths.png)
 
 The paths feature is helpful to see which characters travel together and frequent the same areas on the map. For example, it shows the clear connections between Frodo and Sam, between Merry and Pippin, Pippin and Gandalf, as well as Legolas, Aragorn, and Gimli. In fact, these connections reflect the intricate subplots throughout these films: Sam and Frodo on their travel to Mount Doom in Gorgoroth, Merry and Pippin lost in Fangorn Forest, Legolas, Aragorn, and Gimli as they try to track down those two hobbits, Pippin and Gandalf at Gondor, and many more.
 
-![Aragon Chord & Sam and Frodo Chord](/assets/media/the-fellowship-of-the-script/chords.png)
+![Aragon Chord & Sam and Frodo Chord](/assets/media/projects/the-fellowship-of-the-script/chords.png)
 
 The scene co-occurrence chord graph is also very useful in drawing similar conclusions. In the Two Towers, Aragorn shares scenes with almost entirely Gimli and Legolas. Frodo and Sam frequently show up together in the Two Towers and Return of the King.
 
@@ -219,11 +219,11 @@ Frodo is the main protagonist of the trilogy, but the line count data reveals so
 
 To start, Gandalf leads the fellowship in total lines spoken across the trilogy, a semi-surprising result given that he is absent from a substantial portions of the first two movies. The explanation for this can be seen when checking out Gandalf's scene presence heatmap and seeing how dense in lines of text a lot of the scenes he did appear in were. This accounts for the offset in his absence.
 
-![Gandalf's Dialogue Density](/assets/media/the-fellowship-of-the-script/gandalfs-density.png)
+![Gandalf's Dialogue Density](/assets/media/projects/the-fellowship-of-the-script/gandalfs-density.png)
 
 Another revealing aspect is the shift between Frodo and Sam over the course of the trilogy. In first movie, Frodo dominates the dialogue between the pair. But in the second movie, that dynamic starts to switch and Sam starts to talk a little more than Frodo. By the last movie, Sam dominates the pair in lines spoken. This mirrors the narrative arcs of these two, as the Ring starts to consume Frodo, making him become more reserved, Sam steps into the vocal anchor and source of hope for the pair. Portraying that underlying emotional shift in the pair through quantitative data with some context.
 
-![Frodo and Sam's lines over time](/assets/media/the-fellowship-of-the-script/frodo-sam-lines.png)
+![Frodo and Sam's lines over time](/assets/media/projects/the-fellowship-of-the-script/frodo-sam-lines.png)
 
 ## Technical Implementation
 

@@ -2,7 +2,7 @@
 title: "A World in Data"
 description: "Life expectancy set against access to sanitation, drinking water, and electricity for every country from 2000 to 2023."
 summary: "Electricity, drinking water and sanitation set against life expectancy for every country from 2000 to 2023 — five sources merged into one linked view, so you can pick a region and see what each piece of infrastructure is worth."
-image: "/assets/media/a-world-in-data/dashboard.png"
+image: "/assets/media/projects/a-world-in-data/dashboard.png"
 imageAlt: "A World in Data dashboard"
 imageFit: "contain"
 tech:
@@ -15,14 +15,14 @@ links:
     href: "https://how-basic-infrastructure-shapes-life-expectancy.vercel.app/"
   - label: "Source"
     href: "https://github.com/MatthewGoldsberry/A-World-of-Data"
-order: 3
+order: 5
 featured: true
 status: "Live"
 ---
 
 <div class="mg-project-header">
-<p class="mg-meta"><span><strong>Role</strong> Solo project</span> <span><strong>Data</strong> 5 sources, 4,892 rows, 2000&ndash;2023</span></p>
-<ul class="mg-pills"><li>D3.js</li><li>JavaScript</li><li>Python</li><li>Pandas</li><li>pycountry</li><li>uv</li><li>ruff</li></ul>
+<p class="mg-meta"><span><span><strong>Course project</strong></span></p>
+<ul class="mg-pills"><li>D3.js</li><li>JavaScript</li><li>Python</li><li>Pandas</li><li>Data Visualization</li><li>Web Design</li></ul>
 <p class="mg-btn-row"><a class="mg-btn mg-btn--primary" href="https://how-basic-infrastructure-shapes-life-expectancy.vercel.app/" target="_blank" rel="noopener">Live application</a> <a class="mg-btn" href="https://github.com/MatthewGoldsberry/A-World-of-Data" target="_blank" rel="noopener">Source</a> <a class="mg-btn" href="#video-demonstration">Demo video</a></p>
 </div>
 
@@ -36,7 +36,7 @@ This project is an interactive data visualization environment designed to teach 
 ## Video Demonstration
 
 <figure>
-  <video controls loop muted playsinline width="700">
+  <video controls loop muted playsinline>
     <source src="https://github.com/MatthewGoldsberry/portfolio/releases/download/v0.0.1/a_world_in_data_video_demo.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
@@ -82,13 +82,13 @@ After generating the SVGs for all visualizations, I took images of those and beg
 
 #### Approach 1: "The 4-SVG Grid"
 
-![Early Sketch for Approach 1](/assets/media/a-world-in-data/approach1_early_sketch.png)
+![Early Sketch for Approach 1](/assets/media/projects/a-world-in-data/approach1_early_sketch.png)
 
 This approach shared the central focal point between the scatterplot and choropleth map. This helped to make sure that the choropleth received valuable space, but would require the user to toggle it between the data it was focussing on.
 
 #### Approach 2: "The Central Hub"
 
-![Early Sketch for Approach 2](/assets/media/a-world-in-data/approach2_early_sketch.png)
+![Early Sketch for Approach 2](/assets/media/projects/a-world-in-data/approach2_early_sketch.png)
 
 This approach had the scatterplot as the sole "central hub", with each axis having its own column on either side of it. Each column would contain the axis title, choropleth map, bar chart representing that specific data. This had substantially less whitespace than the first approach did.
 
@@ -96,59 +96,60 @@ This approach had the scatterplot as the sole "central hub", with each axis havi
 
 Approach 2 was my favorite of the two, but I wanted to verify this with fresh eyes. So to finalize my decision I presented the sketches to some peers and gather their thoughts one which was more visually appealing and they would imagine better enable learning from the data. The unanimous decision was Approach 2. One of the main reasons for the favor of Approach 2 was that it didn't require the user to toggle between datasets being represented in the choropleths, but would rather allow them to easily see and compare both.
 
-??? note "Differences between Approach 2 and Final Implementation"
-    While Approach 2 was chosen, the final implementation did change slightly from the sketch. I wanted to take a moment to highlight some of the more major differences: 
+:::note{title="Differences between Approach 2 and Final Implementation" collapsible}
+While Approach 2 was chosen, the final implementation did change slightly from the sketch. I wanted to take a moment to highlight some of the more major differences:
 
-    * The data columns were flipped such that the y-axis would be on the left and the x-axis on the right, to match the ordering of the scatterplot title.
-    * The selection of the feature to compare against was moved from the x-axis label of the scatterplot to the title of the x-axis bar chart and choropleth.
+* The data columns were flipped such that the y-axis would be on the left and the x-axis on the right, to match the ordering of the scatterplot title.
+* The selection of the feature to compare against was moved from the x-axis label of the scatterplot to the title of the x-axis bar chart and choropleth.
+:::
 
 ## Visualization Components & Interactions
 
-![Full Dashboard](/assets/media/a-world-in-data/dashboard.png)
+![Full Dashboard](/assets/media/projects/a-world-in-data/dashboard.png)
 
 The dashboard relies heavily on **Brushing/Selecting/Hovering and Linking**, meaning an interaction in one component immediately updates all others. To reset any selection, the user simply presses the `Escape` key. To unselect any selected component, the user simply clicks the country, point, or bin to unselect that country(ies).
 
 ### The Central Scatterplot
 
-![The Central Scatterplot Card](/assets/media/a-world-in-data/scatterplot.png)
+![The Central Scatterplot Card](/assets/media/projects/a-world-in-data/scatterplot.png)
 
 **What this shows:** Life expectancy (Y-axis) plotted against the selected infrastructure metric (X-axis).
 
 **Interactions:** Users can hover for tooltips that shows the country name and datapoints, click to select a specific country, or use a **brushing tool** to select a cluster of countries, as seen in the example below.
 
-![Brushing on Scatterplot](/assets/media/a-world-in-data/brushing_on_scatterplot.png)
+![Brushing on Scatterplot](/assets/media/projects/a-world-in-data/brushing_on_scatterplot.png)
 
 ### Bar Chart
 
-![Bar Charts](/assets/media/a-world-in-data/barcharts.png)
+![Bar Charts](/assets/media/projects/a-world-in-data/barcharts.png)
 
 **What it shows:** The distribution of countries across binned ranges of the data.
 
 **Interactions:** Users can hover over a bin to temporarily highlight all countries within that range across all five visualizations. Clicking a bin persists this focus, allowing users to isolate specific range groups (e.g., countries with a life expectancy of 74-78 years).
 
-![Selecting a Bin of Countries from the Bar Chart](/assets/media/a-world-in-data/bin_selection.png)
+![Selecting a Bin of Countries from the Bar Chart](/assets/media/projects/a-world-in-data/bin_selection.png)
 
 ### Choropleth Maps
 
-![Choropleth Maps](/assets/media/a-world-in-data/choropleths.png)
+![Choropleth Maps](/assets/media/projects/a-world-in-data/choropleths.png)
 
 **What it shows:** A global geographic view, color-coded using the exact same data bins generated by the bar charts.
 
 **Interactions:** Supports hovering and click-to-select by specific country boundaries.
 
-![Selecting a Country within a Choropleth Map](/assets/media/a-world-in-data/select_with_choropleths.png)
+![Selecting a Country within a Choropleth Map](/assets/media/projects/a-world-in-data/select_with_choropleths.png)
 
 ### Global Interactions
 
 #### Year Slider
 
-![Year Slider](/assets/media/a-world-in-data/year_slider.png)
+![Year Slider](/assets/media/projects/a-world-in-data/year_slider.png)
 
 Allows users to control the active year. Selections also persist, allowing the user to view how a specific cluster of countries evolves over time by sliding the slider (as seen in the demo).
 
 #### X-Axis Dataset Toggle
 
-![Dataset Selection](/assets/media/a-world-in-data/feature_selection.png)
+![Dataset Selection](/assets/media/projects/a-world-in-data/feature_selection.png)
 
 A dropdown to switch the infrastructure metric being analyzed (Water, Sanitation, or Electricity). The selections will also persist through changes in the dataset.
 
@@ -162,9 +163,9 @@ By using the brushing tool to select a group and the choropleth maps to limit th
 
 By interacting with the year slider, we can see a "development surge" from 2000 to 2023 where these countries significantly improved their basic infrastructure. In the scatterplot we can see the direct, positive correlation that as the dots move right, exhibiting a increase in infrastructure, the life expectancy also improves.
 
-![2000-2023 Sanitation Surge](/assets/media/a-world-in-data/2000_2023_basic_sanitation.png)
-![2000-2023 Electricity Surge](/assets/media/a-world-in-data/2000_2023_electricity.png)
-![2000-2023 Drinking Water Surge](/assets/media/a-world-in-data/2000_2023_drinking_water.png)
+![2000-2023 Sanitation Surge](/assets/media/projects/a-world-in-data/2000_2023_basic_sanitation.png)
+![2000-2023 Electricity Surge](/assets/media/projects/a-world-in-data/2000_2023_electricity.png)
+![2000-2023 Drinking Water Surge](/assets/media/projects/a-world-in-data/2000_2023_drinking_water.png)
 
 ### Finding 2: Infrastructure Decoupling in the Common Trend with Zimbabwe
 
@@ -172,13 +173,13 @@ While the data typically shows a positive correlation between infrastructure and
 
 This shows that while the infrastructure can help give us hints towards the life expectancy of a country, it does not always hold true.
 
-![Zimbabwe Over Time](/assets/media/a-world-in-data/zimbabwe_over_time.png)
+![Zimbabwe Over Time](/assets/media/projects/a-world-in-data/zimbabwe_over_time.png)
 
 ### Finding 3: An Outlier in Nauru
 
 While exploring with the bar charts I noticed that there were a couple of outliers where life expectancy was abnormally low for a few countries in the highest percentage of infrastructure access. A couple of them were related to war going on in them, but the one that exhibited this behavior consistently was Nauru, which has very high access to infrastructure but a pretty low life expectancy.
 
-![The Outlier, Nauru](/assets/media/a-world-in-data/outlier.png)
+![The Outlier, Nauru](/assets/media/projects/a-world-in-data/outlier.png)
 
 ## Technical Implementation
 

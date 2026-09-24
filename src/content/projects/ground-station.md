@@ -1,20 +1,21 @@
 ---
 title: "Ground station software"
-description: "Telemetry ingestion, transmission-window prediction, and the database behind UC CubeCats' ground segment."
-summary: "The other half of the link: telemetry ingestion, predicting the next transmission window, and the database the downlinked data lands in."
-image: "/assets/media/gs_shed.jpeg"
+description: "Radio drivers, pass prediction and tracking, and the database behind UC CubeCats' ground station."
+summary: "The other half of the link: driving the radios, predicting and tracking each pass, and the database the downlinked data lands in."
+image: "/assets/media/projects/ground-station/shed.jpeg"
 imageAlt: "The UC CubeCats ground station"
 tech:
-  - "Python"
+  - "Radio Drivers"
   - "Telemetry"
   - "Orbit prediction"
-  - "Databases"
+  - "Database Design/Implementation"
+  - "Python"
 links:
   - label: "Organization"
     href: "https://uccubecats.github.io/"
-order: 6
+order: 2
 featured: true
-status: "In development"
+status: "Live"
 ---
 
 <div class="mg-project-header">
@@ -25,34 +26,27 @@ status: "In development"
 
 ## Overview
 
-I am building the ground station software that ingests telemetry and determines upcoming
-transmission windows, feeding into a database for server-side analysis.
+<figure class="mg-figure--aside">
+  <img src="/assets/media/projects/ground-station/shed.jpeg" alt="The UC CubeCats ground station" loading="lazy" decoding="async">
+</figure>
 
-I am building and working on the ground station software that interacts with radio components to communicate with satellites, specifically LEOPARDSat-1. This has involved writing custom drivers in python for different radio modules as well integrating RadioLib, a C++ package into the python code to abstract the driver code. We current use a SDR for recieving the frequencies and demodulate them on our end. 
+I develop the software for UC CubeCats' ground station, starting with communication with [LEOPARDSat-1](/projects/leopardsat-1/). The station drives the radio hardware, predicts when each satellite will pass overhead, tracks it across the sky, and stores whatever comes down in a database for later analysis.
 
-We use telemetry data from a public API for pass prediction and tracking and adjust for doppler shift which bends the radio waves from the satellites. 
+The long-term goal is a station that can talk to any satellite that is open for communication, not just our own. Nearer term, it needs to be ready to receive data from [HABSat-1](/projects/habsat-1/) once it launches.
 
-The other part of this is a database server on our side for storing the data for further anaylsis and eventually a GUI of the data for others to also see out findings. This involved design and ERD and a simple FastAPI server to manage the CRUD operations. This is build into a docker image that is hosted on an internal server at UC. 
+## Radio
 
-The goal of this ground station is to be able to communicate with any satellite open for communication. 
+For the radio drivers, I first experimented with writing custom Python drivers. What is in place now instead integrates RadioLib, a C++ radio library, into the Python code. On the receive side, a software-defined radio (SDR) picks up the downlink and we demodulate the signal ourselves.
 
-<div class="mg-todo" markdown>
-Expand. The flight software gets the attention, but the ground segment is the half a
-reader can actually picture: a dish on a roof, a satellite overhead for ten minutes, and
-one chance to get the data down. Set that scene, then say what you built.
-</div>
+## Pass prediction and tracking
 
-## Predicting the pass
+<figure class="mg-figure--aside mg-figure--left">
+  <img src="/assets/media/projects/ground-station/iss-tracking.jpg" alt="The station's antenna array pointed at the ISS, a bright dot in the evening sky" loading="lazy" decoding="async">
+</figure>
 
-<div class="mg-todo" markdown>
-How transmission windows are computed — the orbital elements you start from, the library
-or maths involved, and how far ahead it is accurate. If a pass is only a few minutes
-long, say so; it is the fact that makes the rest of this matter.
-</div>
+Pass prediction and tracking use orbital data from a public API. During a pass, the satellite's motion relative to the ground shifts its signal's frequency (Doppler shift), so the station corrects for that shift as the satellite crosses the sky.
 
-## Telemetry and storage
+## Data
 
-<div class="mg-todo" markdown>
-The stack, and how the telemetry database is structured. What does a downlinked packet
-look like on arrival, and what does it look like by the time it is queryable?
-</div>
+Downlinked data goes to a database server on our side. I designed the schema, starting from an ERD, and helped write a simple FastAPI service for the CRUD operations. It runs as a Docker image on an internal UC server. The next step is a GUI, so people outside the team can explore what we collect.
+

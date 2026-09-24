@@ -219,9 +219,13 @@
 
   .mg-entry--logo-bg::after {
     @apply pointer-events-none absolute inset-0 bg-surface content-[''];
-    /* `--mg-entry-logo-strength` (global.css) is how much of the logo shows
-       through; the rest is this overlay. */
-    opacity: calc(1 - var(--mg-entry-logo-strength));
+    /* How much of the logo shows through: the scheme's base (global.css),
+       plus this entry's own daytime boost if it sets one inline — a pale mark
+       needs more by day than a saturated one. `--mg-day` is 0 at night, so
+       the boost only ever applies by day. The rest is this overlay. */
+    opacity: calc(
+      1 - (var(--mg-entry-logo-strength) + var(--mg-day) * var(--mg-entry-logo-day-boost, 0))
+    );
   }
 
   .mg-entry--logo-bg > * {
@@ -233,7 +237,7 @@
      white in the source art, invisible against a light card. `mask-image`
      recolours that shape with whatever `--color-ink` resolves to (near-black
      by day, near-white by night) rather than fighting the scheme with a fixed
-     colour. Its own `--mg-entry-logo-strength` opacity, not the ::after
+     colour. Its own `--mg-entry-logo-ink-strength` opacity, not the ::after
      overlay's — that overlay only dims the *image* layer; stacking this under
      it too would mute it twice. Optional: an entry with nothing to fix up
      (Discovery Lab Global) simply has no `--mg-entry-logo-ink` and this
@@ -253,7 +257,10 @@
     -webkit-mask-position: center;
     mask-size: var(--mg-entry-logo-size, 100% 100%);
     -webkit-mask-size: var(--mg-entry-logo-size, 100% 100%);
-    opacity: var(--mg-entry-logo-strength);
+    /* Same base-plus-daytime-boost as the image layer, with its own pair. */
+    opacity: calc(
+      var(--mg-entry-logo-ink-strength) + var(--mg-day) * var(--mg-entry-logo-ink-day-boost, 0)
+    );
   }
 
   .mg-entry__role {
@@ -295,6 +302,267 @@
 
   .mg-milestone__desc {
     @apply m-0 mt-1 text-ink-muted;
+  }
+
+  /* Admonitions — `:::note`, `:::tip`, `:::info`, `:::example`, `:::quote`,
+     rendered by `remark-admonitions` (see that file for the source syntax).
+     Two accent families, not one per type: `--color-accent` for the callouts
+     that extend the body text (note, tip, example, quote) and `--color-signal`
+     — the same cyan the orbital/machine details in the scene use — for `info`,
+     so a reader can tell "worth pausing on" from "extends what you just read"
+     at a glance without the page reaching for colours the palette doesn't
+     have. A `{collapsible}` attribute renders as `<details>`/`<summary>`
+     instead of `<div>`/`<p>`, so the marker rules below target the element
+     type rather than a modifier class. */
+  .mg-admonition {
+    @apply my-6 rounded-[--radius-md] border border-accent-line bg-surface px-5 py-4;
+  }
+
+  .mg-admonition > :last-child {
+    @apply mb-0;
+  }
+
+  .mg-admonition__title {
+    @apply m-0 flex items-center gap-2 font-mono text-label tracking-[0.08em] text-accent-text uppercase;
+  }
+
+  .mg-admonition__title::before {
+    @apply size-1.5 shrink-0 rounded-full bg-accent content-[''];
+  }
+
+  .mg-admonition--info {
+    @apply border-signal/40;
+  }
+
+  .mg-admonition--info .mg-admonition__title {
+    @apply text-signal;
+  }
+
+  .mg-admonition--info .mg-admonition__title::before {
+    @apply bg-signal;
+  }
+
+  /* `<summary>` already renders a disclosure triangle; swap it for one that
+     matches the dot-marker rhythm of every other title in this component
+     sheet instead of stacking a second, differently-styled arrow beside it. */
+  .mg-admonition summary.mg-admonition__title {
+    @apply cursor-pointer list-none;
+  }
+
+  .mg-admonition summary.mg-admonition__title::-webkit-details-marker {
+    display: none;
+  }
+
+  .mg-admonition summary.mg-admonition__title::after {
+    @apply ml-auto text-ink-faint content-['+'];
+    font-family: var(--font-mono);
+  }
+
+  .mg-admonition[open] > summary.mg-admonition__title::after {
+    content: "−";
+  }
+
+  .mg-admonition[open] > summary.mg-admonition__title {
+    @apply mb-3;
+  }
+
+  /* Code blocks — a fenced block in Markdown, wrapped by `rehype-code-frame`
+     and highlighted by Shiki with both a light and a dark theme. Shiki is set
+     to `defaultColor: false`, so every token carries its colour only as a
+     `--shiki-light` / `--shiki-dark` pair; `light-dark()` picks one, which is
+     fine here because these are colours (see the note on `light-dark()` in
+     global.css). The frame's own ground is the site's, not the theme's, so a
+     block sits in the palette rather than as a foreign rectangle on it. */
+  .mg-code {
+    @apply relative my-5 overflow-hidden rounded-[--radius-md] border border-edge bg-bg-raised;
+    box-shadow: inset 3px 0 0 var(--color-accent-line);
+  }
+
+  .mg-code pre {
+    @apply m-0 py-3.5 pr-14 pl-5 font-mono text-[0.82rem] leading-relaxed;
+    tab-size: 2;
+  }
+
+  .mg-code pre,
+  .mg-code pre span {
+    color: light-dark(var(--shiki-light), var(--shiki-dark));
+  }
+
+  .mg-code pre:focus-visible {
+    @apply outline-2 -outline-offset-2 outline-accent;
+  }
+
+  /* Top-right, GitHub-style: out of the way until the block is hovered or
+     anything in it has focus. Touch screens have no hover to reveal it by,
+     so there it just stays visible. */
+  .mg-code__copy {
+    @apply absolute top-2 right-2 flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-[--radius-sm] border border-edge bg-surface px-2 text-ink-faint;
+    @apply opacity-0 transition-[opacity,color,border-color] duration-150 ease-mg;
+  }
+
+  .mg-code:hover .mg-code__copy,
+  .mg-code:focus-within .mg-code__copy,
+  .mg-code__copy[data-state] {
+    @apply opacity-100;
+  }
+
+  @media (hover: none) {
+    .mg-code__copy {
+      @apply opacity-100;
+    }
+  }
+
+  .mg-code__copy:hover {
+    @apply border-accent-line text-accent-text;
+  }
+
+  .mg-code__copy:focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+
+  .mg-code__copy[data-state="done"] {
+    @apply border-accent-line text-accent-text;
+  }
+
+  .mg-code__icon--done,
+  .mg-code__copy[data-state="done"] .mg-code__icon--copy {
+    @apply hidden;
+  }
+
+  .mg-code__copy[data-state="done"] .mg-code__icon--done {
+    @apply block;
+  }
+
+  .mg-code__status {
+    @apply font-mono text-label tracking-[0.06em] uppercase;
+  }
+
+  .mg-code__status:empty {
+    @apply hidden;
+  }
+
+  /* Tables — a Markdown table, wrapped by `rehype-table-frame`. The frame
+     carries the border and radius (a collapsed table ignores border-radius)
+     and scrolls sideways on a phone instead of widening the page. It is only
+     as wide as the table and centred, like every other figure in the doc
+     column, so a four-column table doesn't stretch into a sparse 960px grid. */
+  .mg-table {
+    @apply my-6 w-fit max-w-full overflow-x-auto rounded-[--radius-md] border border-edge bg-surface;
+    margin-inline: auto;
+  }
+
+  .mg-table table {
+    @apply m-0 min-w-full border-collapse text-[0.9rem] leading-snug;
+    /* Digits of one width, so decimals line up down a column of figures. */
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mg-table :is(th, td) {
+    @apply border-b border-edge px-5 py-2.5 whitespace-nowrap;
+  }
+
+  .mg-table thead th {
+    @apply border-b-edge-strong bg-bg-raised font-mono text-label font-medium tracking-[0.08em] text-ink-faint uppercase;
+  }
+
+  .mg-table tbody td {
+    @apply text-ink-muted;
+  }
+
+  /* The first column is usually the row's name — "Above", "Aligned" — so it
+     reads as a label rather than as one more value. */
+  .mg-table tbody td:first-child {
+    @apply font-medium text-ink;
+  }
+
+  .mg-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .mg-table tbody tr:nth-child(even) {
+    background: color-mix(in srgb, var(--color-ink) 3%, transparent);
+  }
+
+  .mg-table tbody tr:hover {
+    background: var(--color-accent-soft);
+  }
+
+  /* Markdown's `:---:` / `---:` alignment arrives as an `align` attribute,
+     which is only a presentational hint — any author rule setting text-align
+     beats it. So the three are mapped explicitly, and a column with no
+     alignment falls back to the start. */
+  .mg-table :is(th, td):not([align]),
+  .mg-table [align="left"] {
+    @apply text-left;
+  }
+
+  .mg-table [align="center"] {
+    @apply text-center;
+  }
+
+  .mg-table [align="right"] {
+    @apply text-right;
+  }
+
+  /* A figure set beside the text rather than above it — the docs/wiki
+     layout. A photo or a mission patch centred on its own row left most of
+     the 60rem column empty on either side of it, and pushed the words it
+     illustrates below the fold; floated, the section's paragraphs wrap
+     around it and the same content takes half the height.
+
+     Put it directly after a section's heading, so the heading still runs the
+     full width and the image sits level with the section's first line. It
+     floats right by default; `--left` alternates sides when a page has two.
+     Every `h2` clears floats (see global.css), so an image never pokes into
+     the next section, and the blocks that paint their own box — callouts,
+     code, tables, lists — become `flow-root` so they shrink beside the image
+     instead of running their backgrounds underneath it.
+
+     Below 40em there is no room for two columns: it becomes an ordinary
+     centred figure again, held smaller than a full-width image. */
+  .prose-mg .mg-figure--aside {
+    float: right;
+    width: min(36%, 21rem);
+    margin: 0.3rem 0 1rem 2rem;
+  }
+
+  .prose-mg .mg-figure--aside.mg-figure--left {
+    float: left;
+    margin: 0.3rem 2rem 1rem 0;
+  }
+
+  /* Three classes to outrank the doc column's own image rule
+     (`.prose-mg.prose-mg--doc img`, which caps height and centres). Here the
+     figure sets the size and the image just fills it. */
+  .prose-mg.prose-mg--doc .mg-figure--aside img {
+    width: 100%;
+    max-height: none;
+  }
+
+  /* The first paragraph beside the image starts level with its top, instead
+     of a paragraph margin lower. */
+  .prose-mg .mg-figure--aside + p {
+    margin-top: 0;
+  }
+
+  /* `.mg-pills` excluded: it is a <ul> too, and this would override its
+     `flex` and stack the chips into a list. */
+  .prose-mg--doc :is(.mg-todo, .mg-admonition, .mg-code, .mg-table, ul:not(.mg-pills), ol, blockquote) {
+    display: flow-root;
+  }
+
+  @media (max-width: 40em) {
+    .prose-mg .mg-figure--aside,
+    .prose-mg .mg-figure--aside.mg-figure--left {
+      float: none;
+      width: auto;
+      margin: 1.25rem 0;
+    }
+
+    .prose-mg.prose-mg--doc .mg-figure--aside img {
+      width: auto;
+      max-height: 18rem;
+    }
   }
 
   /* Author-facing TODO marker — deliberately loud so it cannot ship unnoticed */

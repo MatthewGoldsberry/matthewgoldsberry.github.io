@@ -27,7 +27,7 @@ export const spotKey = z.enum([
   "cubesats",
   "climbing",
   "fishing",
-  "golf",
+  "camping",
   "hiking",
 ]);
 
@@ -44,6 +44,14 @@ const spots = defineCollection({
     title: z.string(),
     text: z.string(),
     image: z.string().optional(),
+    /**
+     * How the card fits `image` into its slot — same meaning as a project's
+     * `imageFit`. "contain" (the default) shows the whole image, inset: right
+     * for a mission patch, whose emblem reaches every edge. "cover" fills the
+     * slot and crops: right for a photograph, which letterboxed into the
+     * card's short, wide slot became a thin strip.
+     */
+    imageFit: z.enum(["cover", "contain"]).default("contain"),
     /** Optional link through to the work this figure stands for. */
     href: z.string().optional(),
   }),
