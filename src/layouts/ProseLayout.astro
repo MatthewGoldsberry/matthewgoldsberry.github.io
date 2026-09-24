@@ -66,7 +66,10 @@ const heroAction = heroActionLabel && heroActionHref;
   <article class:list={["prose-mg", doc && "prose-mg--doc mx-auto max-w-doc"]}>
     <header
       class:list={[
-        "relative flex flex-wrap items-start justify-between gap-6",
+        /* Below `sm` there's no room for the image beside the text, so the
+           header stacks and the image and button drop back into flow (see
+           their `sm:absolute`) instead of overlapping the title and lede. */
+        "relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:flex-wrap",
         /* A hero image anchors the header's visual weight lower than plain
            title+lede does, so the content below it can follow closer behind
            without reading as cramped — pages without one keep the wider gap.
@@ -77,7 +80,7 @@ const heroAction = heroActionLabel && heroActionHref;
            matched to the image's `max-h-48` below. A bare title with neither
            a lede nor a status badge has nothing of its own to close off, so
            it doesn't need as much air before what follows either. */
-        heroImage ? "mb-1 min-h-48" : lede || status ? "mb-8" : "mb-4",
+        heroImage ? "mb-1 sm:min-h-48" : lede || status ? "mb-8" : "mb-4",
       ]}
     >
       <div class:list={["min-w-0 flex-1", heroImage && "sm:pr-48"]}>
@@ -115,7 +118,7 @@ const heroAction = heroActionLabel && heroActionHref;
             alt={heroImageAlt ?? ""}
             loading="lazy"
             decoding="async"
-            class="absolute top-0 right-0 m-0 h-auto max-h-48 w-auto max-w-[13rem] rounded-[--radius-md] border border-edge object-contain p-3"
+            class="m-0 h-auto sm:absolute sm:top-0 sm:right-0 max-h-48 w-auto max-w-[13rem] rounded-[--radius-md] border border-edge object-contain p-3"
           />
         )
       }
@@ -127,7 +130,7 @@ const heroAction = heroActionLabel && heroActionHref;
              costs nothing in flow, so the line after this header sits right
              under `min-h-48`'s edge instead of one more row-height below
              it. */
-          <p class="mg-btn-row absolute bottom-0 left-0 m-0">
+          <p class="mg-btn-row m-0 sm:absolute sm:bottom-0 sm:left-0">
             <a
               class="mg-btn mg-btn--primary"
               href={heroActionHref}
